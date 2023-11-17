@@ -17,7 +17,7 @@
 EXE = connwatch
 SRC_DIR = ./src
 OBJ_DIR = ./obj
-SOURCES += $(SRC_DIR)/main.cpp $(SRC_DIR)/info_window.cpp $(SRC_DIR)/connections_window.cpp $(SRC_DIR)/action_window.cpp $(SRC_DIR)/window_demon.cpp $(SRC_DIR)/ncurses_funcs.cpp $(SRC_DIR)/connection_entry.cpp
+SOURCES += $(SRC_DIR)/main.cpp $(SRC_DIR)/info_window.cpp $(SRC_DIR)/connections_window.cpp $(SRC_DIR)/action_window.cpp $(SRC_DIR)/window_demon.cpp $(SRC_DIR)/ncurses_funcs.cpp $(SRC_DIR)/connection_entry.cpp $(SRC_DIR)/controller_god.cpp $(SRC_DIR)/model_angel.cpp
 OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 

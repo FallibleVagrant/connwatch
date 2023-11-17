@@ -7,27 +7,10 @@
 
 #include <ncurses.h>
 
-#include "window_demon.h"
+//#include "window_demon.h"
+#include "controller_god.h"
 
 using std::string;
-
-string execPipe(const char* cmd){
-	char buffer[128];
-	std::string result = "";
-	FILE* pipe = popen(cmd, "r");
-	if (!pipe) throw std::runtime_error("popen() failed!");
-	try{
-		while(fgets(buffer, sizeof(buffer), pipe) != NULL){
-			result += buffer;
-		}
-	}
-	catch(...){
-		pclose(pipe);
-		throw;
-	}
-	pclose(pipe);
-	return result;
-}
 
 void init_curses(){
 	initscr();
@@ -41,34 +24,30 @@ void end_curses(){
 	endwin();
 }
 
+/*
 void update_curses(window_demon& demon){
 	//printw("Hello, World.\n");
 }
+*/
 
-//Calls ss and gives ips to demon.
-void update_connections(window_demon& demon){
-	string output = execPipe("ss -naptuH | grep \"127.0.0.1\" -v");
-
-	std::stringstream ss(output);
-	string line;
-	std::vector<string*> lines;
-
-	while(std::getline(ss, line)){
-		if(!line.empty()){
-			line.back() = '\0';
-			lines.push_back(new string(line));
-		}
-	}
-
-	demon.update_connections(lines);
-}
-
-void update_loop(window_demon& demon){
+int update_loop(controller_god& god){
 	while(true){
-		update_curses(demon);
-		update_connections(demon);
-		if(getch() == 'q'){
-			break;
+		int r = god.update();
+		if(r == -1){
+			fprintf(stderr, "Something broke\n");
+			return -1;
+		}
+
+		char input = getch();
+
+		if(input == 'q'){
+			return 0;
+		}
+		else {
+			r = god.handle_input(input);
+			if(r == -1) {
+				fprintf(stderr, "Button was pressed that controller_god does not have a handler for.\n");
+			}
 		}
 	}
 }
@@ -79,10 +58,12 @@ int main(int argc, char* argv[]){
 
 	//nodelay(stdscr, true);
 	timeout(500);
-	window_demon demon = window_demon();
-	update_loop(demon);
+
+	controller_god god;
+
+	int r = update_loop(god);
 	
 	end_curses();
 
-	return 0;
+	return r;
 }
