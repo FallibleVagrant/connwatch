@@ -78,9 +78,14 @@ int get_slabstat(struct slabstat* s){
 	return 0;
 }
 
+static void user_ent_hash_build();
+
 model_angel::model_angel(){
 	//Ignore the error!
 	get_slabstat(&slabstat);
+
+	//Only if you want to show process info.
+	user_ent_hash_build();
 }
 
 model_angel::~model_angel(){}
@@ -171,7 +176,7 @@ struct tcpstat {
 	int 		timeout;
 	int			retrs;
 	unsigned	ino;
-	int			probe;
+	int			probes;
 	unsigned	uid;
 	int			refcnt;
 	unsigned long long sk;
@@ -259,6 +264,226 @@ void addr_print(const inet_prefix* a, int port){
 	fprintf(stderr, "%*s:%-*s ", est_len, ap, 20, resolve_service(port));	//orig. "20" would be "serv_width"
 }
 
+static const char* tmr_name[] = {
+	"off",
+	"on",
+	"keepalive",
+	"timewait",
+	"persist",
+	"unknown"
+};
+
+static const char* print_ms_timer(int timeout){
+	static char buf[64];
+	int secs, msecs, minutes;
+
+	if(timeout < 0){
+		timeout = 0;
+	}
+
+	secs = timeout / 1000;
+	minutes = secs / 60;
+	secs = secs % 60;
+	msecs = timeout % 1000;
+
+	buf[0] = '\0';
+
+	if(minutes){
+		msecs = 0;
+		snprintf(buf, sizeof(buf)-16, "%dmin", minutes);
+		if(minutes > 9){
+			secs = 0;
+		}
+	}
+	if(secs){
+		if(secs > 9){
+			msecs = 0;
+		}
+		sprintf(buf+strlen(buf), "%d%s", secs, msecs ? "." : "sec");
+	}
+	if(msecs){
+		sprintf(buf+strlen(buf), "%03dms", msecs);
+	}
+
+	return buf;
+}
+
+//For _SC_CLK_TCK.
+#include <unistd.h>
+
+int get_user_hz(){
+	return sysconf(_SC_CLK_TCK);
+}
+
+static const char* print_hz_timer(int timeout){
+	int hz = get_user_hz();
+	return print_ms_timer(((timeout*1000) + hz-1)/hz);
+}
+
+struct user_ent {
+	struct user_ent* next;
+	unsigned int ino;
+	int pid;
+	int fd;
+	char process[0];
+};
+
+#define USER_ENT_HASH_SIZE 256
+struct user_ent* user_ent_hash[USER_ENT_HASH_SIZE];
+
+static int user_ent_hashfn(unsigned int ino){
+	int val = (ino >> 24) ^ (ino >> 16) ^ (ino >> 8) ^ ino;
+
+	return val & (USER_ENT_HASH_SIZE - 1);
+}
+
+static void user_ent_add(unsigned int ino, const char* process, int pid, int fd){
+	struct user_ent* p;
+	struct user_ent** pp;
+	int str_len;
+
+	str_len = strlen(process) + 1;
+	p = (struct user_ent*) malloc(sizeof(struct user_ent) + str_len);
+	if(!p){
+		abort();
+	}
+
+	p->next = NULL;
+	p->ino = ino;
+	p->pid = pid;
+	p->fd = fd;
+
+	strcpy(p->process, process);
+	pp = &user_ent_hash[user_ent_hashfn(ino)];
+	p->next = *pp;
+	*pp = p;
+}
+
+//For DIR.
+#include <dirent.h>
+
+//q: What even is all of this?
+//a: I don't know exactly, but it involves hashing and regex, so I assume it's pretty complicated.
+//(It sifts through file descriptors a particular proc has open...)
+static void user_ent_hash_build(){
+	const char* root = getenv("PROC_ROOT") ? : "/proc";
+	struct dirent* d;
+	char name[1024];
+	int nameoff;
+	DIR* dir;
+
+	strcpy(name, root);
+	if(strlen(name) == 0 || name[strlen(name)-1] != '/'){
+		strcat(name, "/");
+	}
+
+	nameoff = strlen(name);
+
+	dir = opendir(name);
+	if(!dir){
+		return;
+	}
+
+	while((d = readdir(dir)) != NULL){
+		struct dirent* d1;
+		char process[16];
+		int pid, pos;
+		DIR* dir1;
+		char c;		//Rank censorship I tell you!
+
+		if(sscanf(d->d_name, "%d%c", &pid, &c) != 1){
+			continue;
+		}
+
+		sprintf(name + nameoff, "%d/fd/", pid);
+
+		pos = strlen(name);
+
+		if((dir1 = opendir(name)) == NULL){
+			continue;
+		}
+
+		process[0] = '\0';
+
+		while((d1 = readdir(dir1)) != NULL){
+			const char* pattern = "socket:[";
+			unsigned int ino;
+			char lnk[64];
+			int fd;
+			ssize_t link_len;
+
+			if(sscanf(d1->d_name, "%d%c", &fd, &c) != 1){
+				continue;
+			}
+
+			sprintf(name+pos, "%d", fd);
+
+			link_len = readlink(name, lnk, sizeof(lnk)-1);
+			if(link_len == 1){
+				continue;
+			}
+			lnk[link_len] = '\0';
+
+			if(strncmp(lnk, pattern, strlen(pattern))){
+				continue;
+			}
+
+			sscanf(lnk, "socket:[%u]", &ino);
+
+			if(process[0] == '\0'){
+				char tmp[1024];
+				FILE* fp;
+
+				snprintf(tmp, sizeof(tmp), "%s/%d/stat", root, pid);
+				if((fp = fopen(tmp, "r")) != NULL){
+					fscanf(fp, "%*d (%[^)])", process);
+					fclose(fp);
+				}
+			}
+
+			user_ent_add(ino, process, pid, fd);
+		}
+		closedir(dir1);
+	}
+	closedir(dir);
+}
+
+static int find_users(unsigned ino, char* buf, int buflen){
+	struct user_ent* p;
+	int cnt = 0;
+	char* ptr;
+
+	if(!ino){
+		return 0;
+	}
+
+	p = user_ent_hash[user_ent_hashfn(ino)];
+	ptr = buf;
+	while(p){
+		if(p->ino != ino){
+			goto next;
+		}
+
+		if(ptr - buf >= buflen - 1){
+			break;
+		}
+
+		snprintf(ptr, buflen - (ptr - buf),
+				"(\"%s\",%d,%d),", p->process, p->pid, p->fd);
+		ptr += strlen(ptr);
+		cnt++;
+
+next:
+		p = p->next;
+	}
+
+	if(ptr != buf){
+		ptr[-1] = '\0';
+	}
+
+	return cnt;
+}
+
 //Originally "tcp_show_line", but we print our info in window_demon instead, maybe?
 int tcp_parse_proc_line(char* line, int AF){
 	struct tcpstat s;
@@ -326,7 +551,7 @@ int tcp_parse_proc_line(char* line, int AF){
 	opt[0] = '\0';
 	n = sscanf(data, "%x %x:%x %x:%x %x %d %d %u %d %llx %d %d %d %d %d %[^\n]\n",
 			&s.state, &s.wq, &s.rq,
-			&s.timer, &s.timeout, &s.retrs, &s.uid, &s.probe, &s.ino,
+			&s.timer, &s.timeout, &s.retrs, &s.uid, &s.probes, &s.ino,
 			&s.refcnt, &s.sk, &s.rto, &s.ato, &s.qack,
 			&s.cwnd, &s.ssthresh, opt);
 
@@ -352,6 +577,49 @@ int tcp_parse_proc_line(char* line, int AF){
 	addr_print(&s.remote, s.remote_port);
 
 	if(1){		//show_options
+		//TODO: why?
+		if(s.timer > 4){
+			s.timer = 5;
+		}
+
+		fprintf(stderr, " timer:(%s,%s,%d)", tmr_name[s.timer], print_hz_timer(s.timeout), s.timer != 1 ? s.probes : s.retrs);
+	}
+
+	if(1){		//show_tcpinfo
+		int hz = get_user_hz();
+		if(s.rto && s.rto != 3*hz){
+			fprintf(stderr, " rto:%g", (double)s.rto/hz);
+		}
+		if(s.ato){
+			fprintf(stderr, " ato:%g", (double)s.ato/hz);
+		}
+		if(s.cwnd != 2){
+			fprintf(stderr, " cwnd:%d", s.ssthresh);
+		}
+		if(s.qack/2){
+			fprintf(stderr, " qack:%d", s.qack/2);
+		}
+		if(s.qack&1){
+			fprintf(stderr, " bidir");
+		}
+	}
+
+	if(1){		//show_users
+		char ubuf[4096];
+		if(find_users(s.ino, ubuf, sizeof(ubuf)) > 0){
+			fprintf(stderr, " users:(%s)", ubuf);
+		}
+	}
+
+	if(1){		//show_details
+		if(s.uid){
+			fprintf(stderr, " uid:%u", (unsigned)s.uid);
+		}
+		fprintf(stderr, " ino:%u", s.ino);
+		fprintf(stderr, " sk:%llx", s.sk);
+		if(opt[0]){
+			fprintf(stderr, " opt:\"%s\"", opt);
+		}
 	}
 
 	fprintf(stderr, "\n");
