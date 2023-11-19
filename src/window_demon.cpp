@@ -17,18 +17,13 @@ window_demon::~window_demon(){
 	*/
 }
 
-void window_demon::update_connections(const std::vector<std::string*>& new_connections){
-	for(connection_entry* entry : connections){
-		delete entry;
-	}
-	connections.clear();
+int window_demon::update(){
+	return 0;
+}
 
-	for(std::string* new_connection : new_connections){
-		if(new_connection != NULL){
-			connections.push_back(new connection_entry(new_connection));
-		}
-	}
+#include "debug.h"
 
-	connect_win.show_connections(connections);
-	action_win.show_actions(connections.size());
+void window_demon::update_connections(const std::vector<conn_entry*>& connections){
+	dbgprint("window_demon is called upon to update_connections,\nnum of connections is: %lu.\n", connections.size());
+	connect_win.draw(connections);
 }

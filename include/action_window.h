@@ -3,7 +3,9 @@
 
 #include <ncurses.h>
 
-class action_window{
+#include "abstract_window.h"
+
+class action_window : public abstract_window{
 	public:
 		action_window();
 		~action_window();

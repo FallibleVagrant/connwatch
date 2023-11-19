@@ -5,13 +5,14 @@
 #include <vector>
 
 #include "connection_entry.h"
+#include "abstract_window.h"
 
-class connections_window{
+class connections_window : public abstract_window{
 	public:
 		connections_window();
 		~connections_window();
 
-		void show_connections(const std::vector<connection_entry*> connections);
+		void draw(const std::vector<conn_entry*>& connections);
 	private:
 		WINDOW* win;
 };

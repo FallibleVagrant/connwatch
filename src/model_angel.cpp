@@ -8,7 +8,7 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
-//#include "connection_entry.h"
+#include "connection_entry.h"
 #include "debug.h"
 
 const char* slabstat_ids[] = {
@@ -80,7 +80,7 @@ int get_slabstat(struct slabstat* s){
 
 static void user_ent_hash_build();
 
-model_angel::model_angel(){
+model_angel::model_angel(window_demon& demon) : demon(demon){
 	//Ignore the error!
 	get_slabstat(&slabstat);
 
@@ -261,7 +261,7 @@ void addr_print(const inet_prefix* a, int port){
 		}
 	}
 
-	fprintf(stderr, "%*s:%-*s ", est_len, ap, 20, resolve_service(port));	//orig. "20" would be "serv_width"
+	//fprintf(stderr, "%*s:%-*s ", est_len, ap, 20, resolve_service(port));	//orig. "20" would be "serv_width"
 }
 
 static const char* tmr_name[] = {
@@ -484,6 +484,8 @@ next:
 	return cnt;
 }
 
+std::vector<conn_entry*> temp_connections;
+
 //Originally "tcp_show_line", but we print our info in window_demon instead, maybe?
 int tcp_parse_proc_line(char* line, int AF){
 	struct tcpstat s;
@@ -568,6 +570,7 @@ int tcp_parse_proc_line(char* line, int AF){
 
 	//Testing via print.
 	//Originally the "20"s are more calculated variables.
+	/*
 	fprintf(stderr, "%-*s ", 20, "tcp");
 	fprintf(stderr, "%-*s ", 20, sstate_name[s.state]);
 
@@ -622,7 +625,20 @@ int tcp_parse_proc_line(char* line, int AF){
 		}
 	}
 
-	fprintf(stderr, "\n");
+	fprintf(stderr, "\n");*/
+
+	//Load info into conn_entry.
+	conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
+
+	entry->netid = "TCP";
+	entry->state = sstate_name[s.state];
+	entry->local_addr = "local";
+	entry->rem_addr = "rem";
+	entry->local_port = "00";
+	entry->rem_port = "00";
+
+	temp_connections.push_back(entry);
+	dbgprint("Pushing back to static connections, size is now: %lu.\n", temp_connections.size());
 
 	return 0;
 }
@@ -632,6 +648,13 @@ int model_angel::fetch_tcp_data(){
 	//Code stolen from ss.c
 	//
 	//"Sigh... We have to parse /proc/net/tcp..."
+	dbgprint("Fetching tcp data from /proc/net/tcp...\n");
+	for(conn_entry* entry : temp_connections){
+		free(entry);
+	}
+	temp_connections.clear();
+	dbgprint("Clearing old static connections for new ones...\n");
+	dbgprint("Size of static connections is now: %lu.\n", temp_connections.size());
 
 	FILE* fp = NULL;
 	char* buf = NULL;
@@ -690,6 +713,12 @@ int model_angel::fetch_connections(){
 		dbgprint("Could not fetch_tcp_data() from system.\n");
 		return -1;
 	}
+
+	dbgprint("Setting model_angel connections to static connections...\n");
+	dbgprint("num of static connections is: %lu.\n", temp_connections.size());
+	this->connections = temp_connections;
+	dbgprint("num of model_angel connections is now: %lu.\n", this->connections.size());
+
 	//fetch_udp_data();
 	//fetch_raw_data();
 
@@ -702,6 +731,8 @@ int model_angel::update(){
 		dbgprint("Could not fetch_connections() from system.\n");
 		return -1;
 	}
+
+	demon.update_connections(this->connections);
 
 	return 0;
 }

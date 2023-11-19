@@ -1,7 +1,8 @@
 #ifndef MODEL_ANGEL_H
 #define MODEL_ANGEL_H
 
-//#include "window_demon.h"
+#include "window_demon.h"
+#include <vector>
 
 struct slabstat {
 	int socks;
@@ -13,13 +14,14 @@ struct slabstat {
 
 class model_angel{
 	public:
-		model_angel();
+		model_angel(window_demon& demon);
 		~model_angel();
 
 		int update();
 	private:
 		struct slabstat slabstat;
-		//window_demon demon;
+		window_demon& demon;
+		std::vector<conn_entry*> connections;
 
 		int get_good_buffer(char** buf, int* bufsize);
 		int fetch_tcp_data();

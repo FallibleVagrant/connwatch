@@ -10,11 +10,15 @@ connections_window::~connections_window(){
 	delwin(win);
 }
 
-void connections_window::show_connections(const std::vector<connection_entry*> connections){
+#include "debug.h"
+
+void connections_window::draw(const std::vector<conn_entry*>& connections){
 	int height;
 	int width;
 	getmaxyx(win, height, width);
 
+	dbgprint("Drawing connections_window...\n");
+	dbgprint("Connections is size: %lu\n", connections.size());
 	for(int i = 0; i < (int) connections.size(); i++){
 		int y_in_window = i + 1;
 
@@ -22,10 +26,10 @@ void connections_window::show_connections(const std::vector<connection_entry*> c
 			break;
 		}
 
-		mvwprintw(win, y_in_window, 1, "%s\t", connections[i]->get_protocol().c_str());
-		wprintw(win, "%s\t", connections[i]->get_connection_state().c_str());
-		wprintw(win, "%s\t", connections[i]->get_ip().c_str());
-		wprintw(win, "%s", connections[i]->get_process().c_str());
+		mvwprintw(win, y_in_window, 1, "%s\t", connections[i]->netid);
+		wprintw(win, "%s\t", connections[i]->state);
+		wprintw(win, "%s\t", connections[i]->local_addr);
+		wprintw(win, "%s", connections[i]->rem_addr);
 	}
 
 	wrefresh(win);

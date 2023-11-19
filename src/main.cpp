@@ -9,8 +9,11 @@
 
 //#include "window_demon.h"
 #include "controller_god.h"
+#include "debug.h"
 
-using std::string;
+FILE* debug_log;
+
+//using std::string;
 
 void init_curses(){
 	initscr();
@@ -34,7 +37,7 @@ int update_loop(controller_god& god){
 	while(true){
 		int r = god.update();
 		if(r == -1){
-			fprintf(stderr, "Something broke\n");
+			fprintf(stderr, "Something broke while updating the windows.\n");
 			return -1;
 		}
 
@@ -53,6 +56,13 @@ int update_loop(controller_god& god){
 }
 
 int main(int argc, char* argv[]){
+	if(DEBUG){
+		debug_log = fopen("debug.log", "w");
+		if(!debug_log){
+			fprintf(stderr, "Could not open debug.log...\nExiting...\n");
+			return -1;
+		}
+	}
 
 	init_curses();
 
@@ -64,6 +74,7 @@ int main(int argc, char* argv[]){
 	int r = update_loop(god);
 	
 	end_curses();
+	fclose(debug_log);
 
 	return r;
 }

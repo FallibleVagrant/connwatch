@@ -1,10 +1,11 @@
 #include "controller_god.h"
 
 #include "model_angel.h"
+#include "window_demon.h"
 
 #include <stdio.h>
 
-controller_god::controller_god(){}
+controller_god::controller_god() : demon(), angel(demon){}
 
 controller_god::~controller_god(){}
 
@@ -12,6 +13,12 @@ int controller_god::update(){
 	int r = angel.update();
 	if(r == -1){
 		fprintf(stderr, "model_angel reported back error.\n");
+		return -1;
+	}
+
+	r = demon.update();
+	if(r == -1){
+		fprintf(stderr, "window_demon reported back error.\n");
 		return -1;
 	}
 

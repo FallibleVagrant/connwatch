@@ -10,7 +10,7 @@ action_window::~action_window(){
 	delwin(win);
 }
 
-void action_window::show_actions(long unsigned int num_actions){
+/*void action_window::show_actions(long unsigned int num_actions){
 	int y;
 	int x;
 	getmaxyx(win, y, x);
@@ -23,4 +23,4 @@ void action_window::show_actions(long unsigned int num_actions){
 	}
 
 	wrefresh(win);
-}
+}*/

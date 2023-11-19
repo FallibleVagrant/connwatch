@@ -3,7 +3,9 @@
 
 #include <ncurses.h>
 
-class info_window{
+#include "abstract_window.h"
+
+class info_window : public abstract_window{
 	public:
 		info_window();
 		~info_window();

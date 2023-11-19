@@ -12,7 +12,7 @@ class controller_god{
 		int update();
 		int handle_input(char button_press);
 	private:
-		//window_demon demon;
+		window_demon demon;
 		model_angel angel;
 };
 
