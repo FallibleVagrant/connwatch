@@ -49,7 +49,7 @@ int update_loop(controller_god& god){
 		else {
 			r = god.handle_input(input);
 			if(r == -1) {
-				fprintf(stderr, "Button was pressed that controller_god does not have a handler for.\n");
+				dbgprint("Button was pressed that controller_god does not have a handler for.\n");
 			}
 		}
 	}

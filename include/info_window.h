@@ -9,6 +9,8 @@ class info_window : public abstract_window{
 	public:
 		info_window();
 		~info_window();
+
+		void draw();
 	private:
 		WINDOW* win;
 };

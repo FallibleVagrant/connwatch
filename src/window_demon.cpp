@@ -24,6 +24,8 @@ int window_demon::update(){
 #include "debug.h"
 
 void window_demon::update_connections(const std::vector<conn_entry*>& connections){
+	dbgprint("window_demon is called upon to draw info_win...\n");
+	info_win.draw();
 	dbgprint("window_demon is called upon to update_connections,\nnum of connections is: %lu.\n", connections.size());
 	connect_win.draw(connections);
 }

@@ -6,7 +6,7 @@
 
 #include "connection_entry.h"
 
-//#include "info_window.h"
+#include "info_window.h"
 #include "connections_window.h"
 //#include "action_window.h"
 
@@ -20,7 +20,7 @@ class window_demon{
 	private:
 		//model_angel& angel;
 
-		//info_window info_win;
+		info_window info_win;
 		connections_window connect_win;
 		//action_window action_win;
 		//settings_window settings_win;
