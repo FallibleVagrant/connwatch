@@ -1,14 +1,14 @@
-#ifndef INFO_WINDOW_H
-#define INFO_WINDOW_H
+#ifndef CONFIG_BAR_H
+#define CONFIG_BAR_H
 
 #include <ncurses.h>
 
 #include "abstract_window.h"
 
-class info_window : public abstract_window{
+class config_bar : abstract_window{
 	public:
-		info_window();
-		~info_window();
+		config_bar();
+		~config_bar();
 
 		void draw();
 		void resize();

@@ -10,7 +10,8 @@ connections_window::~connections_window(){
 	delwin(win);
 }
 
-void connections_window::draw(const std::vector<conn_entry*>& connections){
+#include "debug.h"
+void connections_window::draw(){
 	wclear(win);
 	box(win, 0, 0);
 
@@ -33,4 +34,13 @@ void connections_window::draw(const std::vector<conn_entry*>& connections){
 	}
 
 	wrefresh(win);
+}
+
+void connections_window::update_connections(const std::vector<conn_entry*>& connections){
+	this->connections = connections;
+}
+
+void connections_window::resize(){
+	mvwin(win, (LINES/3) - 1, 0);
+	wresize(win, (2*LINES/3)+2, COLS);
 }

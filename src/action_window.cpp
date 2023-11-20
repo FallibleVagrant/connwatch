@@ -5,7 +5,7 @@
 #include <cstring>
 
 action_window::action_window(){
-	win = ncurses_funcs::create_newwin((2*LINES/3)+2, (COLS/3)+1, (LINES/3)-1, 2*COLS/3);
+	win = ncurses_funcs::create_newwin((2*LINES/3)+2, (COLS/3)+1, (LINES/3)-1, COLS - ((COLS/3)+1));
 	this->is_visible = false;
 }
 
@@ -61,4 +61,9 @@ void action_window::select_up(){
 	if(choice < 0){
 		choice = num_choices - 1;
 	}
+}
+
+void action_window::resize(){
+	mvwin(win, (LINES/3)-1, COLS - ((COLS/3)+1));
+	wresize(win, (2*LINES/3)+2, (COLS/3)+1);
 }

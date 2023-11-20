@@ -9,6 +9,7 @@
 #include "info_window.h"
 #include "connections_window.h"
 #include "action_window.h"
+#include "config_bar.h"
 
 class window_demon{
 	public:
@@ -21,13 +22,14 @@ class window_demon{
 		void hide_actions();
 		void select_down();
 		void select_up();
+		void trigger_resize();
 	private:
 		//model_angel& angel;
 
 		info_window info_win;
 		connections_window connect_win;
 		action_window action_win;
-		//settings_window settings_win;
+		config_bar config_win;
 };
 
 #endif

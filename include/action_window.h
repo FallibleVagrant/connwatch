@@ -15,6 +15,7 @@ class action_window : public abstract_window{
 		void draw();
 		void select_down();
 		void select_up();
+		void resize();
 	private:
 		WINDOW* win;
 };

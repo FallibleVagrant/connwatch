@@ -14,13 +14,13 @@ struct slabstat {
 
 class model_angel{
 	public:
-		model_angel(window_demon& demon);
+		model_angel(window_demon* pointer_to_demon);
 		~model_angel();
 
 		int update();
 	private:
 		struct slabstat slabstat;
-		window_demon& demon;
+		window_demon* demon_pointer;
 		std::vector<conn_entry*> connections;
 
 		int get_good_buffer(char** buf, int* bufsize);

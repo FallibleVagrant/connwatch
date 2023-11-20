@@ -80,7 +80,9 @@ int get_slabstat(struct slabstat* s){
 
 static void user_ent_hash_build();
 
-model_angel::model_angel(window_demon& demon) : demon(demon){
+model_angel::model_angel(window_demon* pointer_to_demon){
+	this->demon_pointer = pointer_to_demon;
+
 	//Ignore the error!
 	get_slabstat(&slabstat);
 
@@ -742,7 +744,7 @@ int model_angel::update(){
 		return -1;
 	}
 
-	demon.update_connections(this->connections);
+	demon_pointer->update_connections(this->connections);
 
 	return 0;
 }

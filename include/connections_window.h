@@ -12,9 +12,12 @@ class connections_window : public abstract_window{
 		connections_window();
 		~connections_window();
 
-		void draw(const std::vector<conn_entry*>& connections);
+		void draw();
+		void update_connections(const std::vector<conn_entry*>& connections);
+		void resize();
 	private:
 		WINDOW* win;
+		std::vector<conn_entry*> connections;
 };
 
 #endif

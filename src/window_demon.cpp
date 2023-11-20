@@ -18,15 +18,18 @@ window_demon::~window_demon(){
 }
 
 int window_demon::update(){
+	info_win.draw();
+	connect_win.draw();
+	if(action_win.is_visible){
+		action_win.draw();
+	}
+	config_win.draw();
+
 	return 0;
 }
 
 void window_demon::update_connections(const std::vector<conn_entry*>& connections){
-	info_win.draw();
-	connect_win.draw(connections);
-	if(action_win.is_visible){
-		action_win.draw();
-	}
+	connect_win.update_connections(connections);
 }
 
 void window_demon::show_actions(){
@@ -56,4 +59,11 @@ void window_demon::select_up(){
 		//connect_win
 		;
 	}
+}
+
+void window_demon::trigger_resize(){
+	info_win.resize();
+	connect_win.resize();
+	action_win.resize();
+	config_win.resize();
 }

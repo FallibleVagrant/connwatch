@@ -9,7 +9,7 @@
 
 unsigned int ticker = 0;
 
-controller_god::controller_god() : demon(), angel(demon){}
+controller_god::controller_god() : demon(), angel(&demon){}
 
 controller_god::~controller_god(){}
 
@@ -56,4 +56,8 @@ int controller_god::handle_input(char button_press){
 	}
 
 	return 0;
+}
+
+window_demon* controller_god::get_demon(){
+	return &demon;
 }

@@ -37,3 +37,8 @@ void info_window::draw(){
 
 	wrefresh(win);
 }
+
+void info_window::resize(){
+	mvwin(win, 0, 0);
+	wresize(win, LINES/3, COLS);
+}
