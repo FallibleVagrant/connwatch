@@ -63,6 +63,7 @@ int main(int argc, char* argv[]){
 			return -1;
 		}
 	}
+	dbgprint("Starting...\n");
 
 	init_curses();
 

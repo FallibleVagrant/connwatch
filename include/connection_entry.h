@@ -4,10 +4,8 @@
 typedef struct connection_entry{
 	const char* netid;
 	const char* state;
-	const char* local_addr;
-	const char* rem_addr;
-	const char* local_port;
-	const char* rem_port;
+	char* local_addr;
+	char* rem_addr;
 } conn_entry;
 
 #endif

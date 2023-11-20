@@ -198,8 +198,8 @@ static const char* sstate_name[] = {
 	[TCP_CLOSING] = "CLOSING",
 };
 
-//TODO: mk this name clearer
-const char* format_host(int AF, int len, const void* addr, char* buf, int buflen){
+//Originally format_host.
+const char* format_addr(int AF, int len, const void* addr, char* buf, int buflen){
 	//dbgprint("Formatting address from binary to text...\n");
 	//TODO: add this functionality.
 	if(0){	//An option would be present here; for now we do nothing to resolve the hostname.
@@ -230,9 +230,42 @@ static const char* resolve_service(int port){
 }
 
 //Originally "formatted_print"
-void addr_print(const inet_prefix* a, int port){
+char* format_addr_port(const inet_prefix* a, int port){
 	char buf[1024];
+	char* res;
+
+	if((res = (char*) calloc(128, sizeof(char))) == NULL){
+		return NULL;
+	}
+
+	//IPv4
+	if(a->family == AF_INET){
+		if(a->data[0] == '\0'){
+			buf[0] = '*';
+			buf[1] = '\0';
+		}
+		else{
+			format_addr(AF_INET, 4, a->data, buf, sizeof(buf));
+		}
+	}
+	//IPv6
+	else{
+		format_addr(a->family, 16, a->data, buf, sizeof(buf));
+	}
+
+	//IPv4
+	if(a->family == AF_INET){
+		sprintf(res, "%s:%s", buf, resolve_service(port));
+	}
+	//IPv6
+	else{
+		sprintf(res, "[%s]:%s", buf, resolve_service(port));
+	}
+
+	return res;
+	/*char buf[1024];
 	const char* ap = buf;
+	char* res;
 	int est_len;
 
 	int addr_width = 16;	//Originally addr_width is a more calculated value, but for now we set it to 20. TODO: figure out what addr_width actually is.
@@ -262,6 +295,7 @@ void addr_print(const inet_prefix* a, int port){
 	}
 
 	//fprintf(stderr, "%*s:%-*s ", est_len, ap, 20, resolve_service(port));	//orig. "20" would be "serv_width"
+	*/
 }
 
 static const char* tmr_name[] = {
@@ -632,10 +666,18 @@ int tcp_parse_proc_line(char* line, int AF){
 
 	entry->netid = "TCP";
 	entry->state = sstate_name[s.state];
-	entry->local_addr = "local";
-	entry->rem_addr = "rem";
-	entry->local_port = "00";
-	entry->rem_port = "00";
+	char* temp = format_addr_port(&s.local, s.local_port);
+	if(temp == NULL){
+		dbgprint("Could not format address.\n");
+		return -1;
+	}
+	entry->local_addr = temp;
+	temp = format_addr_port(&s.remote, s.remote_port);
+	if(temp == NULL){
+		dbgprint("Could not format address.\n");
+		return -1;
+	}
+	entry->rem_addr = temp;
 
 	temp_connections.push_back(entry);
 	dbgprint("Pushing back to static connections, size is now: %lu.\n", temp_connections.size());
@@ -650,6 +692,8 @@ int model_angel::fetch_tcp_data(){
 	//"Sigh... We have to parse /proc/net/tcp..."
 	dbgprint("Fetching tcp data from /proc/net/tcp...\n");
 	for(conn_entry* entry : temp_connections){
+		free(entry->local_addr);
+		free(entry->rem_addr);
 		free(entry);
 	}
 	temp_connections.clear();
