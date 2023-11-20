@@ -37,7 +37,11 @@ void connections_window::draw(){
 }
 
 void connections_window::update_connections(const std::vector<conn_entry*>& connections){
-	this->connections = connections;
+	//this->connections = connections;
+	this->connections.clear();
+	for(conn_entry* entry : connections){
+		this->connections.push_back(entry);
+	}
 }
 
 void connections_window::resize(){

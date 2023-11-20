@@ -659,14 +659,6 @@ int model_angel::fetch_tcp_data(){
 	//
 	//"Sigh... We have to parse /proc/net/tcp..."
 	dbgprint("Fetching tcp data from /proc/net/tcp...\n");
-	for(conn_entry* entry : temp_connections){
-		free(entry->local_addr);
-		free(entry->rem_addr);
-		free(entry);
-	}
-	temp_connections.clear();
-	dbgprint("Clearing old static connections for new ones...\n");
-	dbgprint("Size of static connections is now: %lu.\n", temp_connections.size());
 
 	FILE* fp = NULL;
 	char* buf = NULL;
@@ -726,10 +718,14 @@ int model_angel::fetch_connections(){
 		return -1;
 	}
 
-	dbgprint("Setting model_angel connections to static connections...\n");
-	dbgprint("num of static connections is: %lu.\n", temp_connections.size());
-	this->connections = temp_connections;
-	dbgprint("num of model_angel connections is now: %lu.\n", this->connections.size());
+	dbgprint("transferring to model_angel->connections from temp_connections...\n");
+	dbgprint("num of temp_connections is: %lu.\n", temp_connections.size());
+	this->connections.clear();
+	for(conn_entry* entry : temp_connections){
+		this->connections.push_back(entry);
+	}
+	temp_connections.clear();
+	dbgprint("num of model_angel->connections is now: %lu.\n", this->connections.size());
 
 	//fetch_udp_data();
 	//fetch_raw_data();
@@ -738,6 +734,12 @@ int model_angel::fetch_connections(){
 }
 
 int model_angel::update(){
+	//Keep reference to the previous connections to free() later.
+	std::vector<conn_entry*> old_connections;
+	for(conn_entry* entry : this->connections){
+		old_connections.push_back(entry);
+	}
+
 	int r = fetch_connections();
 	if(r == -1){
 		dbgprint("Could not fetch_connections() from system.\n");
@@ -745,6 +747,19 @@ int model_angel::update(){
 	}
 
 	demon_pointer->update_connections(this->connections);
+
+	//Demon's copy of connections has been updated! We can now free() the old connections.
+	//Deferring this to now means demon's conn_win's list of connections is always valid.
+	//Thus we can call draw() whenever we want, for example with a SIG interrupt.
+	dbgprint("Size of old_connections is: %lu.\n", old_connections.size());
+	dbgprint("Clearing old_connections...\n");
+	for(conn_entry* entry : old_connections){
+		free(entry->local_addr);
+		free(entry->rem_addr);
+		free(entry);
+	}
+	old_connections.clear();
+	dbgprint("Size of old_connections is now: %lu.\n", old_connections.size());
 
 	return 0;
 }
