@@ -21,11 +21,39 @@ int window_demon::update(){
 	return 0;
 }
 
-#include "debug.h"
-
 void window_demon::update_connections(const std::vector<conn_entry*>& connections){
-	dbgprint("window_demon is called upon to draw info_win...\n");
 	info_win.draw();
-	dbgprint("window_demon is called upon to update_connections,\nnum of connections is: %lu.\n", connections.size());
 	connect_win.draw(connections);
+	if(action_win.is_visible){
+		action_win.draw();
+	}
+}
+
+void window_demon::show_actions(){
+	action_win.is_visible = true;
+}
+
+void window_demon::hide_actions(){
+	action_win.is_visible = false;
+}
+
+
+void window_demon::select_down(){
+	if(action_win.is_visible){
+		action_win.select_down();
+	}
+	else{
+		//connect_win
+		;
+	}
+}
+
+void window_demon::select_up(){
+	if(action_win.is_visible){
+		action_win.select_up();
+	}
+	else{
+		//connect_win
+		;
+	}
 }

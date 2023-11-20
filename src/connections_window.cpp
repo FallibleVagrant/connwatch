@@ -10,8 +10,6 @@ connections_window::~connections_window(){
 	delwin(win);
 }
 
-#include "debug.h"
-
 void connections_window::draw(const std::vector<conn_entry*>& connections){
 	wclear(win);
 	box(win, 0, 0);
@@ -20,8 +18,6 @@ void connections_window::draw(const std::vector<conn_entry*>& connections){
 	int width;
 	getmaxyx(win, height, width);
 
-	dbgprint("Drawing connections_window...\n");
-	dbgprint("Connections is size: %lu\n", connections.size());
 	mvwprintw(win, 1, 1, "Netid State etc.");
 	for(int i = 0; i < (int) connections.size(); i++){
 		int y_in_window = i + 2;
@@ -30,7 +26,7 @@ void connections_window::draw(const std::vector<conn_entry*>& connections){
 			break;
 		}
 
-		mvwprintw(win, y_in_window, 1, "%s\t", connections[i]->netid);
+		mvwprintw(win, y_in_window, 1, "%s   ", connections[i]->netid);
 		wprintw(win, "%s\t", connections[i]->state);
 		wprintw(win, "%s\t", connections[i]->local_addr);
 		wprintw(win, "%s", connections[i]->rem_addr);

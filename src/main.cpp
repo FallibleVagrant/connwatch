@@ -19,6 +19,7 @@ void init_curses(){
 	initscr();
 	cbreak();
 	noecho();
+	curs_set(0);	//Invisible cursor.
 	keypad(stdscr, TRUE);
 	refresh();
 }

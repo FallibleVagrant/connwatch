@@ -36,8 +36,17 @@ int controller_god::update(){
 
 int controller_god::handle_input(char button_press){
 	switch(button_press){
+		case 'l':
+			demon.show_actions();
+			break;
 		case 'h':
-			//angel.help();
+			demon.hide_actions();
+			break;
+		case 'j':
+			demon.select_down();
+			break;
+		case 'k':
+			demon.select_up();
 			break;
 		case ERR:
 			//No button was pressed.

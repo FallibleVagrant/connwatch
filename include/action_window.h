@@ -10,7 +10,11 @@ class action_window : public abstract_window{
 		action_window();
 		~action_window();
 
-		void show_actions(long unsigned int num_actions);
+		void toggle_visibility();
+		bool is_visible;
+		void draw();
+		void select_down();
+		void select_up();
 	private:
 		WINDOW* win;
 };

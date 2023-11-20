@@ -2,8 +2,8 @@
 
 #include "ncurses_funcs.h"
 
-#include "debug.h"
 #include "common.h"
+#include "debug.h"
 
 info_window::info_window(){
 	win = ncurses_funcs::create_newwin(LINES/3, COLS, 0, 0);
@@ -16,7 +16,6 @@ info_window::~info_window(){
 void info_window::draw(){
 	wclear(win);
 	box(win, 0, 0);
-	dbgprint("Printing info_window...\n");
 	mvwprintw(win, 1, 1, "Info window!");
 
 	const char* ellipsis;

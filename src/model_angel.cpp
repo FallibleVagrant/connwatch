@@ -263,39 +263,6 @@ char* format_addr_port(const inet_prefix* a, int port){
 	}
 
 	return res;
-	/*char buf[1024];
-	const char* ap = buf;
-	char* res;
-	int est_len;
-
-	int addr_width = 16;	//Originally addr_width is a more calculated value, but for now we set it to 20. TODO: figure out what addr_width actually is.
-	est_len = addr_width;
-
-	//IPv4
-	if(a->family == AF_INET){
-		if(a->data[0] == '\0'){
-			buf[0] = '*';
-			buf[1] = '\0';
-		}
-		else{
-			ap = format_host(AF_INET, 4, a->data, buf, sizeof(buf));
-		}
-	}
-	//IPv6
-	else{
-		ap = format_host(a->family, 16, a->data, buf, sizeof(buf));
-		est_len = strlen(ap);
-		if(est_len <= addr_width){
-			est_len = addr_width;
-		}
-		else{
-			//TODO: why?
-			est_len = addr_width + ((est_len - addr_width + 3) / 4) * 4;
-		}
-	}
-
-	//fprintf(stderr, "%*s:%-*s ", est_len, ap, 20, resolve_service(port));	//orig. "20" would be "serv_width"
-	*/
 }
 
 static const char* tmr_name[] = {
@@ -680,7 +647,6 @@ int tcp_parse_proc_line(char* line, int AF){
 	entry->rem_addr = temp;
 
 	temp_connections.push_back(entry);
-	dbgprint("Pushing back to static connections, size is now: %lu.\n", temp_connections.size());
 
 	return 0;
 }
