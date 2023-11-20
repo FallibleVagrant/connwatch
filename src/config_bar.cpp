@@ -11,6 +11,7 @@ config_bar::~config_bar(){
 }
 
 void config_bar::draw(){
+	resize();
 	wclear(win);
 
 	mvwprintw(win, 0, 0, "test | showing: tcp | group-by: none | sound: n/a");

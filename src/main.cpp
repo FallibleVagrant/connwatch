@@ -61,29 +61,41 @@ static void int_handler(int i){
 	exit(0);
 }
 
-//Since there is only one demon, we can reference it for the winch_handler.
-static window_demon* demon_pointer;
+//Cf. note in main.cpp about SIGWINCH.
+/*volatile int should_resize = 0;
+
+static void (*ncurses_winch_handler)(int);
 
 static void winch_handler(int i){
-	demon_pointer->trigger_resize();
+	ncurses_winch_handler(i);
+	should_resize++;
 	mvprintw(0, 0, "WINCHED!");
-}
+}*/
 
 #include <signal.h>
 
 //See https://www.gnu.org/software/libc/manual/html_node/Sigaction-Function-Example.html
 static void set_signals(){
-	struct sigaction int_action, winch_action;
+	struct sigaction int_action;//, winch_action, old_winch_action;
 	int_action.sa_handler = int_handler;
 	sigemptyset(&int_action.sa_mask);
 	int_action.sa_flags = 0;
 
+	//NOTE: ncurses has its own SIGWINCH handler,
+	//which should be called from our own.
+	//
+	//NOTE: resizing based on SIGWINCH breaks the windows for some reason,
+	//taking the lazy approach and resize()ing every draw() for now.
+	//
+	/*sigaction(SIGWINCH, NULL, &old_winch_action);
+	ncurses_winch_handler = old_winch_action.sa_handler;
+
 	winch_action.sa_handler = winch_handler;
 	sigemptyset(&winch_action.sa_mask);
-	winch_action.sa_flags = 0;
+	winch_action.sa_flags = 0;*/
 
 	sigaction(SIGINT, &int_action, NULL);
-	sigaction(SIGWINCH, &winch_action, NULL);
+	//sigaction(SIGWINCH, &winch_action, NULL);
 }
 
 int main(int argc, char* argv[]){
@@ -104,7 +116,7 @@ int main(int argc, char* argv[]){
 	controller_god god;
 
 	//Signals.
-	demon_pointer = god.get_demon();
+	//demon_pointer = god.get_demon();
 	set_signals();
 
 	int r = update_loop(god);

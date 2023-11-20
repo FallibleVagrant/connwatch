@@ -10,8 +10,8 @@ connections_window::~connections_window(){
 	delwin(win);
 }
 
-#include "debug.h"
 void connections_window::draw(){
+	resize();
 	wclear(win);
 	box(win, 0, 0);
 

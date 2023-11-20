@@ -14,6 +14,7 @@ info_window::~info_window(){
 }
 
 void info_window::draw(){
+	resize();
 	wclear(win);
 	box(win, 0, 0);
 	mvwprintw(win, 1, 1, "Info window!");

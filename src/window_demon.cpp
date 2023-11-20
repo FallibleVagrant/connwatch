@@ -18,6 +18,13 @@ window_demon::~window_demon(){
 }
 
 int window_demon::update(){
+	//After receiving SIGWINCH, resize demon.
+	//Cf. note in main.cpp about SIGWINCH.
+	/*if(should_resize){
+		this->trigger_resize();
+		should_resize = 0;
+	}*/
+
 	info_win.draw();
 	connect_win.draw();
 	if(action_win.is_visible){

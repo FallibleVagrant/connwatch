@@ -16,6 +16,7 @@ controller_god::~controller_god(){}
 int controller_god::update(){
 	ticker += 1;
 	ticker %= 3;
+
 	int r = angel.update();
 	if(r == -1){
 		fprintf(stderr, "model_angel reported back error.\n");
@@ -56,8 +57,4 @@ int controller_god::handle_input(char button_press){
 	}
 
 	return 0;
-}
-
-window_demon* controller_god::get_demon(){
-	return &demon;
 }

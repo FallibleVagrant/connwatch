@@ -28,6 +28,7 @@ static int choice = 0;
 #include "debug.h"
 
 void action_window::draw(){
+	resize();
 	wclear(win);
 	box(win, 0, 0);
 	mvwprintw(win, 1, 1, "Actions");
