@@ -69,6 +69,23 @@ void window_demon::hide_actions(){
 	action_win.is_visible = false;
 }
 
+void window_demon::select_right(){
+	if(!action_win.is_visible){
+		action_win.is_visible = true;
+	}
+	else{
+		;
+	}
+}
+
+void window_demon::select_left(){
+	if(action_win.is_visible){
+		action_win.is_visible = false;
+	}
+	else{
+		;
+	}
+}
 
 void window_demon::select_down(){
 	if(action_win.is_visible){

@@ -42,7 +42,7 @@ int update_loop(controller_god& god){
 			return -1;
 		}
 
-		char input = getch();
+		int input = getch();
 
 		if(input == 'q'){
 			return 0;

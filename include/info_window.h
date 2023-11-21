@@ -12,10 +12,10 @@ class info_window : public abstract_window{
 
 		void draw();
 		void resize();
-		void print(const char* message);
+		void print(const char* fmt, ...);
 	private:
 		WINDOW* win;
-		const char* message;
+		bool has_custom_message;
 };
 
 #endif

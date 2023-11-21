@@ -12,7 +12,7 @@
 
 info_window::info_window(){
 	win = ncurses_funcs::create_newwin(INFO_WIN_HEIGHT, INFO_WIN_WIDTH, INFO_WIN_START_Y, INFO_WIN_START_X);
-	message = NULL;
+	has_custom_message = false;
 }
 
 info_window::~info_window(){
@@ -21,12 +21,9 @@ info_window::~info_window(){
 
 void info_window::draw(){
 	resize();
-	wclear(win);
+	//wclear(win);
 	box(win, 0, 0);
-	if(message != NULL){
-		mvwprintw(win, 1, 1, message);
-	}
-	else{
+	if(!has_custom_message){
 		mvwprintw(win, 1, 1, "Info window!");
 	}
 
@@ -45,6 +42,7 @@ void info_window::draw(){
 			dbgprint("Impossible situation reached! Expect a crash!\n");
 			break;
 	}
+	mvwprintw(win, 2, 1, "   ");
 	mvwprintw(win, 2, 1, ellipsis);
 
 	wrefresh(win);
@@ -55,6 +53,12 @@ void info_window::resize(){
 	wresize(win, INFO_WIN_HEIGHT, INFO_WIN_WIDTH);
 }
 
-void info_window::print(const char* message){
-	this->message = message;
+void info_window::print(const char* fmt, ...){
+	va_list args;
+	va_start(args, fmt);
+	mvwprintw(win, 1, 1, fmt, args);
+	va_end(args);
+	//Clear the space afterwards.
+	wprintw(win, "          ");
+	has_custom_message = true;
 }

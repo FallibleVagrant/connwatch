@@ -20,6 +20,8 @@ class window_demon{
 		void update_connections(const std::vector<conn_entry*>& connections);
 		void show_actions();
 		void hide_actions();
+		void select_right();
+		void select_left();
 		void select_down();
 		void select_up();
 		void trigger_resize();

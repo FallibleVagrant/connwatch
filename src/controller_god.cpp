@@ -35,18 +35,21 @@ int controller_god::update(){
 //For ERR.
 #include <ncurses.h>
 
-#include "debug.h"
-int controller_god::handle_input(char button_press){
+int controller_god::handle_input(int button_press){
 	switch(button_press){
+		case KEY_RIGHT:
 		case 'l':
-			demon.show_actions();
+			demon.select_right();
 			break;
+		case KEY_LEFT:
 		case 'h':
-			demon.hide_actions();
+			demon.select_left();
 			break;
+		case KEY_DOWN:
 		case 'j':
 			demon.select_down();
 			break;
+		case KEY_UP:
 		case 'k':
 			demon.select_up();
 			break;
@@ -58,9 +61,6 @@ int controller_god::handle_input(char button_press){
 			break;
 		case 'r':
 			demon.rem_bogus_entry();
-			break;
-		case 'b':
-			dbgprint("Breakpoint set.\n");
 			break;
 		case ERR:
 			//No button was pressed.
