@@ -23,6 +23,9 @@ class window_demon{
 		void select_down();
 		void select_up();
 		void trigger_resize();
+		void enter_bogus_mode();
+		void add_bogus_entry();
+		void rem_bogus_entry();
 	private:
 		//model_angel& angel;
 
@@ -30,6 +33,10 @@ class window_demon{
 		connections_window connect_win;
 		action_window action_win;
 		config_bar config_win;
+
+		bool bogus_mode;
+		int bogus_entries = 0;
+		std::vector<conn_entry*> bogus_connections;
 };
 
 #endif

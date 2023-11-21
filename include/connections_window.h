@@ -14,10 +14,13 @@ class connections_window : public abstract_window{
 
 		void draw();
 		void update_connections(const std::vector<conn_entry*>& connections);
+		void select_down();
+		void select_up();
 		void resize();
 	private:
 		WINDOW* win;
 		std::vector<conn_entry*> connections;
+		int choice;
 };
 
 #endif

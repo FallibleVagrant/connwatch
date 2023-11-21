@@ -18,6 +18,7 @@ class action_window : public abstract_window{
 		void resize();
 	private:
 		WINDOW* win;
+		int choice;
 };
 
 #endif

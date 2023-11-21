@@ -2,7 +2,9 @@
 
 #include "ncurses_funcs.h"
 
-window_demon::window_demon(){}
+window_demon::window_demon(){
+	bogus_mode = false;
+}
 
 window_demon::~window_demon(){
 	//Destructors are called regardless.
@@ -36,7 +38,27 @@ int window_demon::update(){
 }
 
 void window_demon::update_connections(const std::vector<conn_entry*>& connections){
-	connect_win.update_connections(connections);
+	if(bogus_mode){
+		for(conn_entry* entry : bogus_connections){
+			free(entry);
+		}
+		bogus_connections.clear();
+		for(int i = 0; i < bogus_entries; i++){
+			conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
+
+			entry->netid = "BOG";
+			entry->state = "JOSHING";
+			entry->local_addr = "Me:the past";
+			entry->rem_addr = "You:the present";
+
+			bogus_connections.push_back(entry);
+		}
+
+		connect_win.update_connections(bogus_connections);
+	}
+	else{
+		connect_win.update_connections(connections);
+	}
 }
 
 void window_demon::show_actions(){
@@ -53,8 +75,7 @@ void window_demon::select_down(){
 		action_win.select_down();
 	}
 	else{
-		//connect_win
-		;
+		connect_win.select_down();
 	}
 }
 
@@ -63,8 +84,7 @@ void window_demon::select_up(){
 		action_win.select_up();
 	}
 	else{
-		//connect_win
-		;
+		connect_win.select_up();
 	}
 }
 
@@ -73,4 +93,24 @@ void window_demon::trigger_resize(){
 	connect_win.resize();
 	action_win.resize();
 	config_win.resize();
+}
+
+#include "debug.h"
+void window_demon::enter_bogus_mode(){
+	info_win.print("Entered bogus mode!");
+	dbgprint("Entered bogus mode!\n");
+	bogus_mode = true;
+	bogus_entries = 0;
+}
+
+void window_demon::add_bogus_entry(){
+	info_win.print("Added bogus entry!");
+	bogus_entries++;
+}
+
+void window_demon::rem_bogus_entry(){
+	info_win.print("Removed bogus entry!");
+	if(bogus_entries > 0){
+		bogus_entries--;
+	}
 }

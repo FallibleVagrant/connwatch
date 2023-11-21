@@ -5,8 +5,14 @@
 #include "common.h"
 #include "debug.h"
 
+#define INFO_WIN_HEIGHT		(LINES / 3)
+#define INFO_WIN_WIDTH		COLS
+#define INFO_WIN_START_Y	0
+#define INFO_WIN_START_X	0
+
 info_window::info_window(){
-	win = ncurses_funcs::create_newwin(LINES/3, COLS, 0, 0);
+	win = ncurses_funcs::create_newwin(INFO_WIN_HEIGHT, INFO_WIN_WIDTH, INFO_WIN_START_Y, INFO_WIN_START_X);
+	message = NULL;
 }
 
 info_window::~info_window(){
@@ -17,7 +23,12 @@ void info_window::draw(){
 	resize();
 	wclear(win);
 	box(win, 0, 0);
-	mvwprintw(win, 1, 1, "Info window!");
+	if(message != NULL){
+		mvwprintw(win, 1, 1, message);
+	}
+	else{
+		mvwprintw(win, 1, 1, "Info window!");
+	}
 
 	const char* ellipsis;
 	switch(ticker){
@@ -40,6 +51,10 @@ void info_window::draw(){
 }
 
 void info_window::resize(){
-	mvwin(win, 0, 0);
-	wresize(win, LINES/3, COLS);
+	mvwin(win, INFO_WIN_START_Y, INFO_WIN_START_X);
+	wresize(win, INFO_WIN_HEIGHT, INFO_WIN_WIDTH);
+}
+
+void info_window::print(const char* message){
+	this->message = message;
 }

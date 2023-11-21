@@ -4,9 +4,15 @@
 
 #include <cstring>
 
+#define ACTION_WIN_HEIGHT	(LINES - (LINES / 3) + 1)
+#define ACTION_WIN_WIDTH	((COLS / 3) + 1)
+#define ACTION_WIN_START_Y	((LINES / 3) - 1)
+#define ACTION_WIN_START_X	(COLS - ((COLS / 3) + 1))
+
 action_window::action_window(){
-	win = ncurses_funcs::create_newwin((2*LINES/3)+2, (COLS/3)+1, (LINES/3)-1, COLS - ((COLS/3)+1));
+	win = ncurses_funcs::create_newwin(ACTION_WIN_HEIGHT, ACTION_WIN_WIDTH, ACTION_WIN_START_Y, ACTION_WIN_START_X);
 	this->is_visible = false;
+	choice = 0;
 }
 
 action_window::~action_window(){
@@ -23,7 +29,6 @@ static const char* choices[] = {
 };
 
 static int num_choices = sizeof(choices) / sizeof(choices[0]);
-static int choice = 0;
 
 #include "debug.h"
 
@@ -37,15 +42,16 @@ void action_window::draw(){
 	int x;
 	getmaxyx(win, y, x);
 
-	int y_in_window = (y / 2) + 1 - (num_choices / 2);
+	int start_y = (y / 2) + 1 - (num_choices / 2);
 	for(int i = 0; i < num_choices; i++){
 		if(i > y - 1){
 			break;
 		}
 
-		mvwprintw(win, y_in_window + i, ((COLS/3)/2) - strlen(choices[i])/2, choices[i]);
+		mvwprintw(win, start_y + i, ((COLS/3)/2) - strlen(choices[i])/2, choices[i]);
+
 		if(choice == i){
-			mvwchgat(win, y_in_window + i, 1, (COLS/3) - 1, A_REVERSE, 0, NULL);
+			mvwchgat(win, start_y + i, 1, (COLS/3) - 1, A_REVERSE, 0, NULL);
 		}
 	}
 
@@ -65,6 +71,6 @@ void action_window::select_up(){
 }
 
 void action_window::resize(){
-	mvwin(win, (LINES/3)-1, COLS - ((COLS/3)+1));
-	wresize(win, (2*LINES/3)+2, (COLS/3)+1);
+	mvwin(win, ACTION_WIN_START_Y, ACTION_WIN_START_X);
+	wresize(win, ACTION_WIN_HEIGHT, ACTION_WIN_WIDTH);
 }

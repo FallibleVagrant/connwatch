@@ -14,6 +14,8 @@ class config_bar : abstract_window{
 		void resize();
 	private:
 		WINDOW* win;
+		char buf[256];
+		size_t buflen;
 };
 
 #endif

@@ -116,7 +116,6 @@ int main(int argc, char* argv[]){
 	controller_god god;
 
 	//Signals.
-	//demon_pointer = god.get_demon();
 	set_signals();
 
 	int r = update_loop(god);

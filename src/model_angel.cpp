@@ -633,6 +633,11 @@ int tcp_parse_proc_line(char* line, int AF){
 	//Load info into conn_entry.
 	conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
 
+	if(entry == NULL){
+		dbgprint("OOM\n");
+		return -1;
+	}
+
 	entry->netid = "TCP";
 	entry->state = sstate_name[s.state];
 	char* temp = format_addr_port(&s.local, s.local_port);
