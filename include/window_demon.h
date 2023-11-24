@@ -10,6 +10,7 @@
 #include "connections_window.h"
 #include "action_window.h"
 #include "config_bar.h"
+#include "warn_window.h"
 
 class window_demon{
 	public:
@@ -35,6 +36,7 @@ class window_demon{
 		connections_window connect_win;
 		action_window action_win;
 		config_bar config_win;
+		warn_window warn_win;
 
 		bool bogus_mode;
 		int bogus_entries = 0;

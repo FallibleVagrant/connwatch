@@ -29,6 +29,7 @@ int window_demon::update(){
 
 	info_win.draw();
 	connect_win.draw();
+	warn_win.draw();
 	if(action_win.is_visible){
 		action_win.draw();
 	}
@@ -108,6 +109,7 @@ void window_demon::select_up(){
 void window_demon::trigger_resize(){
 	info_win.resize();
 	connect_win.resize();
+	warn_win.resize();
 	action_win.resize();
 	config_win.resize();
 }

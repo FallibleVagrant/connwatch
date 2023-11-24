@@ -7,7 +7,7 @@
 
 #include "common.h"
 
-unsigned int ticker = 0;
+unsigned int ticker = 761283810;
 
 controller_god::controller_god() : demon(), angel(&demon){}
 
@@ -15,7 +15,6 @@ controller_god::~controller_god(){}
 
 int controller_god::update(){
 	ticker += 1;
-	ticker %= 3;
 
 	int r = angel.update();
 	if(r == -1){

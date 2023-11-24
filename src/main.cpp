@@ -15,11 +15,29 @@ FILE* debug_log;
 
 //using std::string;
 
+#include "colors.h"
+
 void init_curses(){
 	initscr();
 	cbreak();
 	noecho();
-	curs_set(0);	//Invisible cursor.
+
+	//Invisible cursor.
+	curs_set(0);
+
+	//Colors.
+	if(has_colors()){
+		start_color();
+		init_color(COLOR_WHITE, 1000, 1000, 1000);
+		init_color(COLOR_BLACK, 94, 94, 94);
+		init_color(COLOR_RED, 700, 0, 0);
+
+		init_color(COLOR_MAGENTA, 600, 100, 100);
+	}
+
+	init_pair(RED_AND_BLACK, COLOR_RED, COLOR_BLACK);
+	init_pair(WARN_AND_BLACK, COLOR_MAGENTA, COLOR_BLACK);
+
 	keypad(stdscr, TRUE);
 	refresh();
 }

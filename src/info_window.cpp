@@ -22,13 +22,17 @@ info_window::~info_window(){
 void info_window::draw(){
 	resize();
 	//wclear(win);
+	//Jankily clear the screen.
+	for(int i = 2; i < INFO_WIN_HEIGHT; i++){
+		mvwprintw(win, i, 0, "                                                                                                           ");
+	}
 	box(win, 0, 0);
 	if(!has_custom_message){
 		mvwprintw(win, 1, 1, "Info window!");
 	}
 
 	const char* ellipsis;
-	switch(ticker){
+	switch(ticker % 3){
 		case 0:
 			ellipsis = ".";
 			break;
@@ -42,7 +46,6 @@ void info_window::draw(){
 			dbgprint("Impossible situation reached! Expect a crash!\n");
 			break;
 	}
-	mvwprintw(win, 2, 1, "   ");
 	mvwprintw(win, 2, 1, ellipsis);
 
 	wrefresh(win);
