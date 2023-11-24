@@ -128,8 +128,15 @@ void warn_window::draw(){
 
 	int frame_r = ticker % warn_animation_num_frames[r];
 
-	const char** frame = animation[frame_r];
-	const unsigned int num_lines = warn_animation_lens[r][frame_r];
+	//Uncomment for animations.
+	//const char** frame = animation[frame_r];
+	//const unsigned int num_lines = warn_animation_lens[r][frame_r];
+	const char* frame[] = {
+		"/ \\",
+		"    ",
+		"\\ /",
+	};
+	const unsigned int num_lines = sizeof(frame) / sizeof(frame[0]);
 	const unsigned int num_cols = strlen(frame[0]);
 
 	//Compute the horizontal and vertical shift applied to the frame every so often.
