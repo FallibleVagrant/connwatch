@@ -9,7 +9,10 @@
 
 unsigned int ticker = 761283810;
 
-controller_god::controller_god() : demon(), angel(&demon){}
+controller_god::controller_god() : demon(), angel(){
+	demon.start(&angel);
+	angel.start(&demon);
+}
 
 controller_god::~controller_god(){}
 
@@ -51,15 +54,6 @@ int controller_god::handle_input(int button_press){
 		case KEY_UP:
 		case 'k':
 			demon.select_up();
-			break;
-		case '0':
-			demon.enter_bogus_mode();
-			break;
-		case 'a':
-			demon.add_bogus_entry();
-			break;
-		case 'r':
-			demon.rem_bogus_entry();
 			break;
 		case ERR:
 			//No button was pressed.

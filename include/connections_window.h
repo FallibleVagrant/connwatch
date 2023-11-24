@@ -7,19 +7,21 @@
 #include "connection_entry.h"
 #include "abstract_window.h"
 
+#include "model_angel.h"
+
 class connections_window : public abstract_window{
 	public:
 		connections_window();
+		void start(model_angel* pointer_to_angel);
 		~connections_window();
 
 		void draw();
-		void update_connections(const std::vector<conn_entry*>& connections);
 		void select_down();
 		void select_up();
 		void resize();
 	private:
 		WINDOW* win;
-		std::vector<conn_entry*> connections;
+		model_angel* angel_pointer;
 		int choice;
 };
 

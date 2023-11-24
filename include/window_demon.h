@@ -12,35 +12,29 @@
 #include "config_bar.h"
 #include "warn_window.h"
 
+class model_angel;
+
 class window_demon{
 	public:
 		window_demon();
+		void start(model_angel* pointer_to_angel);
 		~window_demon();
 
 		int update();
-		void update_connections(const std::vector<conn_entry*>& connections);
-		void show_actions();
-		void hide_actions();
+		void resolve_action(const char* selection);
 		void select_right();
 		void select_left();
 		void select_down();
 		void select_up();
 		void trigger_resize();
-		void enter_bogus_mode();
-		void add_bogus_entry();
-		void rem_bogus_entry();
 	private:
-		//model_angel& angel;
+		model_angel* angel_pointer;
 
 		info_window info_win;
 		connections_window connect_win;
 		action_window action_win;
 		config_bar config_win;
 		warn_window warn_win;
-
-		bool bogus_mode;
-		int bogus_entries = 0;
-		std::vector<conn_entry*> bogus_connections;
 };
 
 #endif

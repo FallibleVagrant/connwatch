@@ -16,6 +16,7 @@ class action_window : public abstract_window{
 		void select_down();
 		void select_up();
 		void resize();
+		const char* get_selection();
 	private:
 		WINDOW* win;
 		int choice;

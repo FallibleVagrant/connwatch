@@ -2,8 +2,14 @@
 
 #include "ncurses_funcs.h"
 
-window_demon::window_demon(){
-	bogus_mode = false;
+#include <cstring>
+
+window_demon::window_demon(){}
+
+void window_demon::start(model_angel* ap){
+	angel_pointer = ap;
+
+	connect_win.start(ap);
 }
 
 window_demon::~window_demon(){
@@ -38,36 +44,14 @@ int window_demon::update(){
 	return 0;
 }
 
-void window_demon::update_connections(const std::vector<conn_entry*>& connections){
-	if(bogus_mode){
-		for(conn_entry* entry : bogus_connections){
-			free(entry);
-		}
-		bogus_connections.clear();
-		for(int i = 0; i < bogus_entries; i++){
-			conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
-
-			entry->netid = "BOG";
-			entry->state = "JOSHING";
-			entry->local_addr = "Me:the past";
-			entry->rem_addr = "You:the present";
-
-			bogus_connections.push_back(entry);
-		}
-
-		connect_win.update_connections(bogus_connections);
+void window_demon::resolve_action(const char* selection){
+	if(strcmp(selection, "Hello") == 0){
+		info_win.print("Hello, World.");
 	}
-	else{
-		connect_win.update_connections(connections);
+	else if(strcmp(selection, "Dig") == 0){
+		//Etc.
+		;
 	}
-}
-
-void window_demon::show_actions(){
-	action_win.is_visible = true;
-}
-
-void window_demon::hide_actions(){
-	action_win.is_visible = false;
 }
 
 void window_demon::select_right(){
@@ -75,7 +59,7 @@ void window_demon::select_right(){
 		action_win.is_visible = true;
 	}
 	else{
-		;
+		this->resolve_action(action_win.get_selection());
 	}
 }
 
@@ -112,24 +96,4 @@ void window_demon::trigger_resize(){
 	warn_win.resize();
 	action_win.resize();
 	config_win.resize();
-}
-
-#include "debug.h"
-void window_demon::enter_bogus_mode(){
-	info_win.print("Entered bogus mode!");
-	dbgprint("Entered bogus mode!\n");
-	bogus_mode = true;
-	bogus_entries = 0;
-}
-
-void window_demon::add_bogus_entry(){
-	info_win.print("Added bogus entry!");
-	bogus_entries++;
-}
-
-void window_demon::rem_bogus_entry(){
-	info_win.print("Removed bogus entry!");
-	if(bogus_entries > 0){
-		bogus_entries--;
-	}
 }

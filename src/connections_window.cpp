@@ -11,7 +11,12 @@
 
 connections_window::connections_window(){
 	win = ncurses_funcs::create_newwin(CONN_WIN_HEIGHT, CONN_WIN_WIDTH, CONN_WIN_START_Y, CONN_WIN_START_X);
+	angel_pointer = NULL;
 	choice = 0;
+}
+
+void connections_window::start(model_angel* ap){
+	angel_pointer = ap;
 }
 
 connections_window::~connections_window(){
@@ -26,6 +31,8 @@ void connections_window::draw(){
 	box(win, 0, 0);
 
 	mvwprintw(win, 1, 1, "Netid State etc.");
+
+	std::vector<conn_entry*> connections = angel_pointer->get_connections();
 
 	if(connections.size() == 0){
 		wrefresh(win);
@@ -180,14 +187,8 @@ void connections_window::draw(){
 	wrefresh(win);
 }
 
-void connections_window::update_connections(const std::vector<conn_entry*>& connections){
-	this->connections.clear();
-	for(conn_entry* entry : connections){
-		this->connections.push_back(entry);
-	}
-}
-
 void connections_window::select_down(){
+	std::vector<conn_entry*> connections = angel_pointer->get_connections();
 	if(connections.size() > 0){
 		choice++;
 		choice %= connections.size();
@@ -195,6 +196,7 @@ void connections_window::select_down(){
 }
 
 void connections_window::select_up(){
+	std::vector<conn_entry*> connections = angel_pointer->get_connections();
 	if(connections.size() > 0){
 		choice--;
 		if(choice < 0){

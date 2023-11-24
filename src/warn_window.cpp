@@ -63,7 +63,6 @@ const char* get_rand_char(int rand){
 void warn_window::draw(){
 	resize();
 	wclear(win);
-	box(win, 0, 0);
 
 	for(int i = 1; i < WARN_WIN_HEIGHT - 1; i++){
 		wattron(win, COLOR_PAIR(WARN_AND_BLACK));
@@ -176,7 +175,9 @@ void warn_window::draw(){
 	}
 	*/
 
-	//mvwprintw(win, 1, (WARN_WIN_WIDTH/2) - length_to_first_newline, frame);
+	//Box at the end so it is not occluded.
+	box(win, 0, 0);
+
 	const char* text;
 	unsigned int text_len;
 	if(warning_level == 0){
@@ -190,6 +191,8 @@ void warn_window::draw(){
 		//text = 
 		//Maybe have a ref to angel?
 		//also have color change upon warning.
+		//Also a warning sign on alert.
+		//and popup.
 	}
 	mvwprintw(win, WARN_WIN_HEIGHT - 1, (WARN_WIN_WIDTH/2) - text_len/2, text);
 

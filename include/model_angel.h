@@ -1,7 +1,8 @@
 #ifndef MODEL_ANGEL_H
 #define MODEL_ANGEL_H
 
-#include "window_demon.h"
+#include "connection_entry.h"
+
 #include <vector>
 
 struct slabstat {
@@ -12,12 +13,16 @@ struct slabstat {
 	int skbs;
 };
 
+class window_demon;
+
 class model_angel{
 	public:
-		model_angel(window_demon* pointer_to_demon);
+		model_angel();
+		void start(window_demon* pointer_to_demon);
 		~model_angel();
 
 		int update();
+		std::vector<conn_entry*> get_connections();
 	private:
 		struct slabstat slabstat;
 		window_demon* demon_pointer;

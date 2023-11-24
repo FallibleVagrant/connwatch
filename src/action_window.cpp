@@ -74,3 +74,7 @@ void action_window::resize(){
 	mvwin(win, ACTION_WIN_START_Y, ACTION_WIN_START_X);
 	wresize(win, ACTION_WIN_HEIGHT, ACTION_WIN_WIDTH);
 }
+
+const char* action_window::get_selection(){
+	return choices[this->choice];
+}
