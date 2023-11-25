@@ -23,6 +23,7 @@ class model_angel{
 
 		int update();
 		std::vector<conn_entry*> get_connections();
+		unsigned int get_num_connections();
 	private:
 		struct slabstat slabstat;
 		window_demon* demon_pointer;

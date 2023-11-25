@@ -33,6 +33,10 @@ int window_demon::update(){
 		should_resize = 0;
 	}*/
 
+	if(angel_pointer->get_num_connections() == 0){
+		action_win.is_visible = false;
+	}
+
 	info_win.draw();
 	connect_win.draw();
 	warn_win.draw();
@@ -55,11 +59,13 @@ void window_demon::resolve_action(const char* selection){
 }
 
 void window_demon::select_right(){
-	if(!action_win.is_visible){
-		action_win.is_visible = true;
-	}
-	else{
-		this->resolve_action(action_win.get_selection());
+	if(angel_pointer->get_num_connections() > 0){
+		if(!action_win.is_visible){
+			action_win.is_visible = true;
+		}
+		else{
+			this->resolve_action(action_win.get_selection());
+		}
 	}
 }
 

@@ -97,6 +97,10 @@ std::vector<conn_entry*> model_angel::get_connections(){
 	return this->connections;
 }
 
+unsigned int model_angel::get_num_connections(){
+	return this->connections.size();
+}
+
 int model_angel::get_good_buffer(char** buf, int* bufsize){
 	//Estimate amount of sockets and try to allocate
 	//huge buffer to read all the table with one read.
