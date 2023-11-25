@@ -23,11 +23,17 @@ class model_angel{
 
 		int update();
 		std::vector<conn_entry*> get_connections();
+		int get_num_warnings();
+		int get_num_alerts();
 		unsigned int get_num_connections();
+		void warn();
+		void alert();
 	private:
 		struct slabstat slabstat;
 		window_demon* demon_pointer;
 		std::vector<conn_entry*> connections;
+		int num_warnings;
+		int num_alerts;
 
 		int get_good_buffer(char** buf, int* bufsize);
 		int fetch_tcp_data();

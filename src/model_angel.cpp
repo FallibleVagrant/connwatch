@@ -85,6 +85,9 @@ model_angel::model_angel(){
 
 	//Only if you want to show process info.
 	user_ent_hash_build();
+
+	num_warnings = 0;
+	num_alerts = 0;
 }
 
 void model_angel::start(window_demon* pointer_to_demon){
@@ -93,12 +96,28 @@ void model_angel::start(window_demon* pointer_to_demon){
 
 model_angel::~model_angel(){}
 
+void model_angel::warn(){
+	this->num_warnings++;
+}
+
+void model_angel::alert(){
+	this->num_alerts++;
+}
+
 std::vector<conn_entry*> model_angel::get_connections(){
 	return this->connections;
 }
 
 unsigned int model_angel::get_num_connections(){
 	return this->connections.size();
+}
+
+int model_angel::get_num_warnings(){
+	return this->num_warnings;
+}
+
+int model_angel::get_num_alerts(){
+	return this->num_alerts;
 }
 
 int model_angel::get_good_buffer(char** buf, int* bufsize){

@@ -5,6 +5,8 @@
 
 #include <cstring>
 
+#include "model_angel.h"
+
 //Save these settings for alert window?
 /*#define WARN_WIN_HEIGHT		(LINES / 3)
 #define WARN_WIN_WIDTH		((COLS / 3) + 1)
@@ -18,7 +20,10 @@
 
 warn_window::warn_window(){
 	win = ncurses_funcs::create_newwin(WARN_WIN_HEIGHT, WARN_WIN_WIDTH, WARN_WIN_START_Y, WARN_WIN_START_X);
-	warning_level = 0;
+}
+
+void warn_window::start(model_angel* pointer_to_angel){
+	this->angel_pointer = pointer_to_angel;
 }
 
 warn_window::~warn_window(){
@@ -121,22 +126,43 @@ void warn_window::draw(){
 		}
 	}
 
-	//Select the animation shown,
-	//then the frame to show.
-	int r = (((ticker / 23) + 2) << 3) % num_animations;
-	const char*** animation = warn_animations[r];
+	int num_alerts = angel_pointer->get_num_alerts();
+	int num_warnings = angel_pointer->get_num_warnings();
 
-	int frame_r = ticker % warn_animation_num_frames[r];
-
-	//Uncomment for animations.
-	//const char** frame = animation[frame_r];
-	//const unsigned int num_lines = warn_animation_lens[r][frame_r];
-	const char* frame[] = {
-		"/ \\",
-		"    ",
-		"\\ /",
-	};
-	const unsigned int num_lines = sizeof(frame) / sizeof(frame[0]);
+	const char** frame;
+	unsigned int num_lines;
+	if(num_alerts > 0){
+		wattron(win, COLOR_PAIR(RED_AND_BLACK));
+		const char* temp[] = {
+			"   .   ",
+			"  / \\  ",
+			" / ! \\ ",
+			"+-----+",
+		};
+		frame = temp;
+		num_lines = 4;
+	}
+	else if(num_warnings > 0){
+		wattron(win, COLOR_PAIR(WARN_AND_BLACK));
+		const char* temp[] = {
+			"   ",
+			"   ",
+			" O ",
+			"/|\\",
+			"   ",
+		};
+		frame = temp;
+		num_lines = 5;
+	}
+	else{
+		const char* temp[] = {
+			"/ \\",
+			"    ",
+			"\\ /",
+		};
+		frame = temp;
+		num_lines = 3;
+	}
 	const unsigned int num_cols = strlen(frame[0]);
 
 	//Compute the horizontal and vertical shift applied to the frame every so often.
@@ -157,6 +183,14 @@ void warn_window::draw(){
 		}
 		mvwprintw(win, i + (WARN_WIN_HEIGHT/2) - (num_lines/2) + vertical_glitch,
 				horizontal_glitch + (WARN_WIN_WIDTH/2) - (num_cols/2), frame[i]);
+	}
+
+	//Reset colors from before.
+	if(num_alerts > 0){
+		wattroff(win, COLOR_PAIR(RED_AND_BLACK));
+	}
+	else if(num_warnings > 0){
+		wattroff(win, COLOR_PAIR(WARN_AND_BLACK));
 	}
 
 	/*
@@ -185,23 +219,35 @@ void warn_window::draw(){
 	//Box at the end so it is not occluded.
 	box(win, 0, 0);
 
-	const char* text;
-	unsigned int text_len;
-	if(warning_level == 0){
-		text = "No alerts";
-		text_len = strlen(text);
+	if(num_alerts > 0){
+		const char* text = "%d alerts";
+		//Hack to find what the length will be after formatting.
+		//https://stackoverflow.com/questions/26910479/find-the-length-of-a-formatted-string-in-c
+		int len = snprintf(NULL, 0, text, num_alerts);
+		mvwprintw(win, 0, (WARN_WIN_WIDTH/2) - len/2, text, num_alerts);
 	}
-	if(warning_level == 1){
-		text = "NUM warnings";
+	else{
+		const char* text = "No alerts";
+		unsigned int len = strlen(text);
+		mvwprintw(win, 0, (WARN_WIN_WIDTH/2) - len/2, text, num_alerts);
 	}
-	if(warning_level == 2){
+	if(num_warnings > 0){
+		const char* text = "%d warnings";
+		//Hack to find what the length will be after formatting.
+		//https://stackoverflow.com/questions/26910479/find-the-length-of-a-formatted-string-in-c
+		int len = snprintf(NULL, 0, text, num_warnings);
+		mvwprintw(win, WARN_WIN_HEIGHT - 1, (WARN_WIN_WIDTH/2) - len/2, text, num_warnings);
+	}
+	else{
+		const char* text = "No warnings";
+		unsigned int len = strlen(text);
+		mvwprintw(win, WARN_WIN_HEIGHT - 1, (WARN_WIN_WIDTH/2) - len/2, text, num_warnings);
+	}
 		//text = 
 		//Maybe have a ref to angel?
 		//also have color change upon warning.
 		//Also a warning sign on alert.
 		//and popup.
-	}
-	mvwprintw(win, WARN_WIN_HEIGHT - 1, (WARN_WIN_WIDTH/2) - text_len/2, text);
 
 	wrefresh(win);
 }

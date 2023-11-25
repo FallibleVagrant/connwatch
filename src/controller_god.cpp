@@ -55,6 +55,13 @@ int controller_god::handle_input(int button_press){
 		case 'k':
 			demon.select_up();
 			break;
+		//Testing.
+		case '0':
+			angel.warn();
+			break;
+		case '9':
+			angel.alert();
+			break;
 		case ERR:
 			//No button was pressed.
 			break;

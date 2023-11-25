@@ -5,16 +5,19 @@
 
 #include "abstract_window.h"
 
+class model_angel;
+
 class warn_window : public abstract_window{
 	public:
 		warn_window();
+		void start(model_angel* pointer_to_angel);
 		~warn_window();
 
 		void draw();
 		void resize();
 	private:
 		WINDOW* win;
-		int warning_level;
+		model_angel* angel_pointer;
 };
 
 #endif

@@ -10,6 +10,7 @@ void window_demon::start(model_angel* ap){
 	angel_pointer = ap;
 
 	connect_win.start(ap);
+	warn_win.start(ap);
 }
 
 window_demon::~window_demon(){
