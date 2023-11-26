@@ -7,12 +7,6 @@
 
 #include "model_angel.h"
 
-//Save these settings for alert window?
-/*#define WARN_WIN_HEIGHT		(LINES / 3)
-#define WARN_WIN_WIDTH		((COLS / 3) + 1)
-#define WARN_WIN_START_Y	((LINES / 3) - 1)
-#define WARN_WIN_START_X	((COLS / 3) - 1)*/
-
 #define WARN_WIN_HEIGHT		(LINES / 4)							//(LINES / 3)
 #define WARN_WIN_WIDTH		((3 + (1/3)) * (LINES / 4))			//((COLS / 3) + 1) Also note that 3.3333 is roughly going to adjust WIDTH to square proportions.
 #define WARN_WIN_START_Y	0

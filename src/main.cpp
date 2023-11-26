@@ -124,7 +124,7 @@ int main(int argc, char* argv[]){
 			return -1;
 		}
 	}
-	dbgprint("Starting...\n");
+	dbgprint("Initializing curses...\n");
 
 	init_curses();
 
@@ -133,11 +133,20 @@ int main(int argc, char* argv[]){
 
 	controller_god god;
 
+	int r = god.start();
+	if(r == -1){
+		dbgprint("Could not start!\n");
+		goto outerr;
+	}
+
 	//Signals.
 	set_signals();
 
-	int r = update_loop(god);
+	dbgprint("Starting main control loop...\n");
+
+	r = update_loop(god);
 	
+outerr:
 	end_curses();
 	fclose(debug_log);
 

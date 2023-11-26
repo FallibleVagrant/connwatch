@@ -7,6 +7,7 @@
 class controller_god{
 	public:
 		controller_god();
+		int start();
 		~controller_god();
 
 		int update();

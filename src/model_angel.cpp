@@ -10,6 +10,8 @@
 
 #include "debug.h"
 
+#include "window_demon.h"
+
 const char* slabstat_ids[] = {
 	"sock",
 	"tcp_bind_bucket",
@@ -90,8 +92,16 @@ model_angel::model_angel(){
 	num_alerts = 0;
 }
 
-void model_angel::start(window_demon* pointer_to_demon){
+int model_angel::start(window_demon* pointer_to_demon){
 	demon_pointer = pointer_to_demon;
+
+	int r = net_agent.init();
+	if(r == -1){
+		dbgprint("Failed to start networking agent!\n");
+		return -1;
+	}
+
+	return 0;
 }
 
 model_angel::~model_angel(){}
@@ -101,7 +111,15 @@ void model_angel::warn(){
 }
 
 void model_angel::alert(){
+	if(this->num_alerts == 0){
+		demon_pointer->trigger_alarum_popup();
+	}
 	this->num_alerts++;
+}
+
+void model_angel::reset_alerts_and_warns(){
+	this->num_warnings = 0;
+	this->num_alerts = 0;
 }
 
 std::vector<conn_entry*> model_angel::get_connections(){
@@ -776,10 +794,31 @@ int model_angel::fetch_connections(){
 	return 0;
 }
 
+int model_angel::check_networking_agent(){
+	int r = net_agent.check_for_incoming_connections();
+	if(r == -1){
+		return -1;
+	}
+
+	int outstanding_warnings = net_agent.check_for_messages();
+
+	num_warnings += outstanding_warnings;
+	
+	net_agent.reset_outstanding_warnings();
+
+	return 0;
+}
+
 int model_angel::update(){
 	int r = fetch_connections();
 	if(r == -1){
 		dbgprint("Could not fetch_connections() from system.\n");
+		return -1;
+	}
+
+	r = check_networking_agent();
+	if(r == -1){
+		dbgprint("Could not communicate with networking agent.\n");
 		return -1;
 	}
 

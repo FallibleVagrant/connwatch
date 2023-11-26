@@ -9,9 +9,24 @@
 
 unsigned int ticker = 761283810;
 
-controller_god::controller_god() : demon(), angel(){
-	demon.start(&angel);
-	angel.start(&demon);
+controller_god::controller_god() : demon(), angel(){}
+
+#include "debug.h"
+
+int controller_god::start(){
+	int r = demon.start(&angel);
+	if(r == -1){
+		dbgprint("Demon could not start!\n");
+		return -1;
+	}
+
+	r = angel.start(&demon);
+	if(r == -1){
+		dbgprint("Angel could not start!\n");
+		return -1;
+	}
+
+	return 0;
 }
 
 controller_god::~controller_god(){}
@@ -61,6 +76,9 @@ int controller_god::handle_input(int button_press){
 			break;
 		case '9':
 			angel.alert();
+			break;
+		case 'r':
+			angel.reset_alerts_and_warns();
 			break;
 		case ERR:
 			//No button was pressed.

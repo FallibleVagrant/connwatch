@@ -6,11 +6,14 @@
 
 window_demon::window_demon(){}
 
-void window_demon::start(model_angel* ap){
+int window_demon::start(model_angel* ap){
 	angel_pointer = ap;
 
 	connect_win.start(ap);
 	warn_win.start(ap);
+	alarum_win.start(ap);
+
+	return 0;
 }
 
 window_demon::~window_demon(){
@@ -45,6 +48,10 @@ int window_demon::update(){
 		action_win.draw();
 	}
 	config_win.draw();
+
+	if(alarum_win.is_animating()){
+		alarum_win.draw();
+	}
 
 	return 0;
 }
@@ -103,4 +110,11 @@ void window_demon::trigger_resize(){
 	warn_win.resize();
 	action_win.resize();
 	config_win.resize();
+	alarum_win.resize();
+}
+
+#include "common.h"
+
+void window_demon::trigger_alarum_popup(){
+	alarum_win.start_animating(ticker);
 }

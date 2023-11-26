@@ -11,13 +11,14 @@
 #include "action_window.h"
 #include "config_bar.h"
 #include "warn_window.h"
+#include "alarum_window.h"
 
 class model_angel;
 
 class window_demon{
 	public:
 		window_demon();
-		void start(model_angel* pointer_to_angel);
+		int start(model_angel* pointer_to_angel);
 		~window_demon();
 
 		int update();
@@ -27,6 +28,7 @@ class window_demon{
 		void select_down();
 		void select_up();
 		void trigger_resize();
+		void trigger_alarum_popup();
 	private:
 		model_angel* angel_pointer;
 
@@ -35,6 +37,7 @@ class window_demon{
 		action_window action_win;
 		config_bar config_win;
 		warn_window warn_win;
+		alarum_window alarum_win;
 };
 
 #endif
