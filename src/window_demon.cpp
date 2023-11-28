@@ -115,6 +115,14 @@ void window_demon::trigger_resize(){
 
 #include "common.h"
 
-void window_demon::trigger_alarum_popup(){
+#include "debug.h"
+void window_demon::trigger_alarum_popup(const char* alarum_message){
+	if(alarum_message == NULL){
+		alarum_win.print("Default Alarm message.");
+	}
+	else{
+		dbgprint("[WINDOW_DEMON] Received alarm with message: %s\n", alarum_message);
+		alarum_win.print("%s", alarum_message);
+	}
 	alarum_win.start_animating(ticker);
 }

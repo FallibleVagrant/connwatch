@@ -75,7 +75,7 @@ int controller_god::handle_input(int button_press){
 			angel.warn();
 			break;
 		case '9':
-			angel.alert();
+			angel.alert(NULL);
 			break;
 		case 'r':
 			angel.reset_alerts_and_warns();

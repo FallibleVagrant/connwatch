@@ -31,10 +31,10 @@ void alarum_window::draw(){
 		initial_ticker = ticker;
 	}
 	resize();
-	wclear(win);
+	//wclear(win);
 	box(win, 0, 0);
 
-	mvwprintw(win, 1, 1, "Alert triggered! %d", ticker - initial_ticker);
+	//mvwprintw(win, 1, 1, "Alert triggered! %d", ticker - initial_ticker);
 
 	wrefresh(win);
 
@@ -55,4 +55,14 @@ void alarum_window::start_animating(unsigned int init_ticker){
 
 bool alarum_window::is_animating(){
 	return is_playing;
+}
+
+void alarum_window::print(const char* fmt, ...){
+	va_list args;
+	va_start(args, fmt);
+	wmove(win, 1, 1);
+	vw_printw(win, fmt, args);
+	va_end(args);
+	//Clear the space afterwards.
+	wprintw(win, "          ");
 }

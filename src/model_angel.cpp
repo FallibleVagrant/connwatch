@@ -12,6 +12,8 @@
 
 #include "window_demon.h"
 
+#include "net_common.h"
+
 const char* slabstat_ids[] = {
 	"sock",
 	"tcp_bind_bucket",
@@ -104,15 +106,20 @@ int model_angel::start(window_demon* pointer_to_demon){
 	return 0;
 }
 
-model_angel::~model_angel(){}
+model_angel::~model_angel(){
+	for(message* p : message_log){
+		free(p->text);
+		free(p);
+	}
+}
 
 void model_angel::warn(){
 	this->num_warnings++;
 }
 
-void model_angel::alert(){
+void model_angel::alert(const char* alarum_message){
 	if(this->num_alerts == 0){
-		demon_pointer->trigger_alarum_popup();
+		demon_pointer->trigger_alarum_popup(alarum_message);
 	}
 	this->num_alerts++;
 }
@@ -794,17 +801,53 @@ int model_angel::fetch_connections(){
 	return 0;
 }
 
+#define MSG_BUFLEN 30
+
+void model_angel::add_message_to_log(int type, char* text){
+	message* p = (message*) calloc(1, sizeof(message));
+
+	p->type = type;
+	//This was already allocated on the heap by the networking agent.
+	p->text = text;
+
+	message_log.push_back(p);
+}
+
 int model_angel::check_networking_agent(){
 	int r = net_agent.check_for_incoming_connections();
 	if(r == -1){
 		return -1;
 	}
 
-	int outstanding_warnings = net_agent.check_for_messages();
+	message messages[MSG_BUFLEN];
 
-	num_warnings += outstanding_warnings;
-	
-	net_agent.reset_outstanding_warnings();
+	int num_messages = net_agent.check_for_messages(messages, MSG_BUFLEN);
+	if(num_messages == -1){
+		return -1;
+	}
+
+	for(unsigned int i = 0; i < num_messages; i++){
+		if(messages[i].text != NULL){
+			dbgprint("[MODEL_ANGEL] Received a message! Text reads: %s\n", messages[i].text);
+		}
+		switch(messages[i].type){
+			case MSG_TYPE_INFO:
+				//this->memo();
+				this->add_message_to_log(MSG_TYPE_INFO, messages[i].text);
+				break;
+			case MSG_TYPE_WARN:
+				this->warn();
+				this->add_message_to_log(MSG_TYPE_WARN, messages[i].text);
+				break;
+			case MSG_TYPE_ALERT:
+				this->alert(messages[i].text);
+				this->add_message_to_log(MSG_TYPE_ALERT, messages[i].text);
+				break;
+			default:
+				dbgprint("[MODEL_ANGEL] Message with unrecognised type somehow got through the filters!\n");
+				break;
+		}
+	}
 
 	return 0;
 }

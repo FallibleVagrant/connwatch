@@ -59,7 +59,8 @@ void info_window::resize(){
 void info_window::print(const char* fmt, ...){
 	va_list args;
 	va_start(args, fmt);
-	mvwprintw(win, 1, 1, fmt, args);
+	wmove(win, 1, 1);
+	vw_printw(win, fmt, args);
 	va_end(args);
 	//Clear the space afterwards.
 	wprintw(win, "          ");

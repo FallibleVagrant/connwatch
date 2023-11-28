@@ -29,8 +29,9 @@ class model_angel{
 		int get_num_alerts();
 		unsigned int get_num_connections();
 		void warn();
-		void alert();
+		void alert(const char* message);
 		void reset_alerts_and_warns();
+		void add_message_to_log(int type, char* text);
 	private:
 		struct slabstat slabstat;
 		window_demon* demon_pointer;
@@ -38,6 +39,7 @@ class model_angel{
 		int num_warnings;
 		int num_alerts;
 		networking_agent net_agent;
+		std::vector<message*> message_log;
 
 		int get_good_buffer(char** buf, int* bufsize);
 		int fetch_tcp_data();

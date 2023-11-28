@@ -28,7 +28,7 @@ class window_demon{
 		void select_down();
 		void select_up();
 		void trigger_resize();
-		void trigger_alarum_popup();
+		void trigger_alarum_popup(const char* alarum_message);
 	private:
 		model_angel* angel_pointer;
 

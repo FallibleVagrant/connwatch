@@ -17,6 +17,7 @@ class alarum_window : public abstract_window{
 		void resize();
 		void start_animating(unsigned int init_ticker);
 		bool is_animating();
+		void print(const char* fmt, ...);
 	private:
 		WINDOW* win;
 		model_angel* angel_pointer;

@@ -12,12 +12,11 @@
 #include <fcntl.h>
 #include <cerrno>
 #include <arpa/inet.h>
+#include <stdlib.h>
 
 #include "debug.h"
 
-networking_agent::networking_agent(){
-	outstanding_warns = 0;
-}
+networking_agent::networking_agent(){}
 
 #define DEFAULT_PORT "40344"
 #define BACKLOG 10
@@ -161,9 +160,21 @@ int networking_agent::check_for_incoming_connections(){
 	return 0;
 }
 
-int networking_agent::check_for_messages(){
+#include "net_common.h"
+
+int networking_agent::check_for_messages(message* message_array, unsigned int array_len){
 	int num_bytes;
 	char buf[BUFLEN];
+
+	unsigned int midx = 0;
+
+	unsigned int outstanding_infos = 0;
+	unsigned int outstanding_warns = 0;
+	unsigned int outstanding_alerts = 0;
+
+	if(array_len == 0){
+		return -2;
+	}
 
 	for(unsigned int i = 0; i < clients.size(); i++){
 		int client_socket = clients[i];
@@ -187,16 +198,121 @@ int networking_agent::check_for_messages(){
 			continue;
 		}
 
+		dbgprint("[NET_AGENT] Received some info! String is: %s\n", buf);
+
+		if(strncmp("INFO", buf, 4) == 0){
+			buf[BUFLEN - 1] = '\0';
+			char* p = strstr(buf, "END");
+			//No END in sight! Abandon this message; it is ill-formed.
+			if(p == NULL){
+				continue;
+			}
+
+			message_array[midx].type = MSG_TYPE_INFO;
+
+			//							v	includes the '\0'
+			char* new_text = (char*) calloc(p - buf, sizeof(char));
+			strncpy(new_text, buf + 4, p - buf - 4);
+
+			if(midx >= array_len){
+				//Trying to assign to a full array!
+				return -1;
+			}
+
+			if(p == buf + 4){
+				//There is no text between INFO and END.
+				message_array[midx].text = NULL;
+			}
+			else{
+				message_array[midx].text = new_text;
+			}
+			midx++;
+
+			dbgprint("[NET_AGENT] Received an info signal!\n");
+			outstanding_infos++;
+
+			if(midx >= array_len){
+				//Reached limit; return early and leave potential messages in recv buffer.
+				break;
+			}
+		}
+
 		if(strncmp("WARN", buf, 4) == 0){
+			dbgprint("[NET_AGENT] Classed a WARN signal; checking...\n");
+			buf[BUFLEN - 1] = '\0';
+			char* p = strstr(buf, "END");
+			//No END in sight! Abandon this message; it is ill-formed.
+			if(p == NULL){
+				dbgprint("[NET_AGENT] Signal did not have an END! Discarding...\n");
+				continue;
+			}
+
+			message_array[midx].type = MSG_TYPE_WARN;
+
+			//							v	includes the '\0'
+			char* new_text = (char*) calloc(p - buf, sizeof(char));
+			strncpy(new_text, buf + 4, p - buf - 4);
+
+			if(midx >= array_len){
+				//Trying to assign to a full array!
+				return -1;
+			}
+
+			if(p == buf + 4){
+				//There is no text between WARN and END.
+				message_array[midx].text = NULL;
+			}
+			else{
+				message_array[midx].text = new_text;
+			}
+			midx++;
+
 			dbgprint("[NET_AGENT] Received a warn signal!\n");
 			outstanding_warns++;
+
+			if(midx >= array_len){
+				//Reached limit; return early and leave potential messages in recv buffer.
+				break;
+			}
+		}
+
+		if(strncmp("ALERT", buf, 5) == 0){
+			char* p = strstr(buf, "END");
+			//No END in sight! Abandon this message; it is ill-formed.
+			if(p == NULL){
+				continue;
+			}
+
+			message_array[midx].type = MSG_TYPE_ALERT;
+
+			//							v	includes the '\0'
+			char* new_text = (char*) calloc(p - buf, sizeof(char));
+			strncpy(new_text, buf + 5, p - buf - 5);
+dbgprint("[NET_AGENT] copied buf to new_text: %s\n", new_text);
+
+			if(midx >= array_len){
+				//Trying to assign to a full array!
+				return -1;
+			}
+
+			if(p == buf + 5){
+				//There is no text between ALERT and END.
+				message_array[midx].text = NULL;
+			}
+			else{
+				message_array[midx].text = new_text;
+			}
+			midx++;
+
+			dbgprint("[NET_AGENT] Received an alert signal!\n");
+			outstanding_alerts++;
+
+			if(midx >= array_len){
+				//Reached limit; return early and leave potential messages in recv buffer.
+				break;
+			}
 		}
 	}
 
-	return outstanding_warns;
-}
-
-void networking_agent::reset_outstanding_warnings(){
-	dbgprint("[NET_AGENT] Reset outstanding_warns to 0.\n");
-	outstanding_warns = 0;
+	return outstanding_infos + outstanding_warns + outstanding_alerts;
 }
