@@ -70,6 +70,12 @@ int controller_god::handle_input(int button_press){
 		case 'k':
 			demon.select_up();
 			break;
+		case 'c':
+			demon.show_connections();
+			break;
+		case 'o':
+			demon.show_log();
+			break;
 		//Testing.
 		case '0':
 			angel.warn();

@@ -12,6 +12,7 @@
 #include "config_bar.h"
 #include "warn_window.h"
 #include "alarum_window.h"
+#include "log_window.h"
 
 class model_angel;
 
@@ -23,12 +24,17 @@ class window_demon{
 
 		int update();
 		void resolve_action(const char* selection);
+
 		void select_right();
 		void select_left();
 		void select_down();
 		void select_up();
 		void trigger_resize();
+
 		void trigger_alarum_popup(const char* alarum_message);
+
+		void show_connections();
+		void show_log();
 	private:
 		model_angel* angel_pointer;
 
@@ -38,6 +44,9 @@ class window_demon{
 		config_bar config_win;
 		warn_window warn_win;
 		alarum_window alarum_win;
+		log_window log_win;
+
+		//void show_main_window(main_window_type);
 };
 
 #endif

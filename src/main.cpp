@@ -33,10 +33,12 @@ void init_curses(){
 		init_color(COLOR_RED, 700, 0, 0);
 
 		init_color(COLOR_MAGENTA, 600, 100, 100);
+		init_color(COLOR_YELLOW, 957, 514, 145);
 	}
 
 	init_pair(RED_AND_BLACK, COLOR_RED, COLOR_BLACK);
 	init_pair(WARN_AND_BLACK, COLOR_MAGENTA, COLOR_BLACK);
+	init_pair(ORANGE_AND_BLACK, COLOR_YELLOW, COLOR_BLACK);
 
 	keypad(stdscr, TRUE);
 	refresh();
@@ -45,12 +47,6 @@ void init_curses(){
 void end_curses(){
 	endwin();
 }
-
-/*
-void update_curses(window_demon& demon){
-	//printw("Hello, World.\n");
-}
-*/
 
 int update_loop(controller_god& god){
 	while(true){

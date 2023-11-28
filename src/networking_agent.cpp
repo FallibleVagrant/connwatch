@@ -16,6 +16,12 @@
 
 #include "debug.h"
 
+const char* MSG_TYPES[] = {
+	[INFO] = "INFO",
+	[WARN] = "WARN",
+	[ALERT] = "ALERT",
+};
+
 networking_agent::networking_agent(){}
 
 #define DEFAULT_PORT "40344"
@@ -162,6 +168,16 @@ int networking_agent::check_for_incoming_connections(){
 
 #include "net_common.h"
 
+//Recv()'d messages should be of format:
+//INFO[ Message ]END
+//WARN[ Message ]END
+//ALERT[ Message ]END
+//
+//Where [ Message ] is a string of characters of any length, including zero.
+//TYPE and END are case-sensitive.
+//END must be included.
+//Bytes should not exceed 256, though for now that is not checked.
+//Subject to change to a more reasonable design, like having the length of the message in the header.
 int networking_agent::check_for_messages(message* message_array, unsigned int array_len){
 	int num_bytes;
 	char buf[BUFLEN];
@@ -208,7 +224,7 @@ int networking_agent::check_for_messages(message* message_array, unsigned int ar
 				continue;
 			}
 
-			message_array[midx].type = MSG_TYPE_INFO;
+			message_array[midx].type = INFO;
 
 			//							v	includes the '\0'
 			char* new_text = (char*) calloc(p - buf, sizeof(char));
@@ -247,7 +263,7 @@ int networking_agent::check_for_messages(message* message_array, unsigned int ar
 				continue;
 			}
 
-			message_array[midx].type = MSG_TYPE_WARN;
+			message_array[midx].type = WARN;
 
 			//							v	includes the '\0'
 			char* new_text = (char*) calloc(p - buf, sizeof(char));
@@ -283,7 +299,7 @@ int networking_agent::check_for_messages(message* message_array, unsigned int ar
 				continue;
 			}
 
-			message_array[midx].type = MSG_TYPE_ALERT;
+			message_array[midx].type = ALERT;
 
 			//							v	includes the '\0'
 			char* new_text = (char*) calloc(p - buf, sizeof(char));

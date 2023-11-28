@@ -1,18 +1,17 @@
-#ifndef CONNECTIONS_WINDOW_H
-#define CONNECTIONS_WINDOW_H
+#ifndef LOG_WINDOW_H
+#define LOG_WINDOW_H
 
 #include <ncurses.h>
 
-#include "connection_entry.h"
 #include "abstract_window.h"
 
 #include "model_angel.h"
 
-class connections_window : public abstract_window{
+class log_window : public abstract_window{
 	public:
-		connections_window();
+		log_window();
 		void start(model_angel* pointer_to_angel);
-		~connections_window();
+		~log_window();
 
 		void draw();
 		void select_down();

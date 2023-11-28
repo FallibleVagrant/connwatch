@@ -25,6 +25,7 @@ class model_angel{
 
 		int update();
 		std::vector<conn_entry*> get_connections();
+		std::vector<message*> get_log();
 		int get_num_warnings();
 		int get_num_alerts();
 		unsigned int get_num_connections();

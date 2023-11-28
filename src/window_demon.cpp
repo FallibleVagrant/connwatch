@@ -12,6 +12,7 @@ int window_demon::start(model_angel* ap){
 	connect_win.start(ap);
 	warn_win.start(ap);
 	alarum_win.start(ap);
+	log_win.start(ap);
 
 	return 0;
 }
@@ -29,6 +30,43 @@ window_demon::~window_demon(){
 	*/
 }
 
+enum{
+	CONNS,
+	LOG,
+};
+
+bool main_window_bitmask[] = {
+	[CONNS] = true,
+	[LOG] = false,
+};
+
+unsigned int bitmask_len = 2;
+
+/*
+void window_demon::show_main_window(main_window_type type){
+	for(unsigned int i = 0; i < bitmask_len; i++){
+		main_window_bitmask[i] = false;
+	}
+	main_window_bitmask[type] = true;
+}
+*/
+
+void window_demon::show_connections(){
+	//show_main_window(CONNS);
+	for(unsigned int i = 0; i < bitmask_len; i++){
+		main_window_bitmask[i] = false;
+	}
+	main_window_bitmask[CONNS] = true;
+}
+
+void window_demon::show_log(){
+	//show_main_window(LOG);
+	for(unsigned int i = 0; i < bitmask_len; i++){
+		main_window_bitmask[i] = false;
+	}
+	main_window_bitmask[LOG] = true;
+}
+
 int window_demon::update(){
 	//After receiving SIGWINCH, resize demon.
 	//Cf. note in main.cpp about SIGWINCH.
@@ -42,11 +80,20 @@ int window_demon::update(){
 	}
 
 	info_win.draw();
-	connect_win.draw();
+
+	if(main_window_bitmask[CONNS]){
+		connect_win.draw();
+	}
+	if(main_window_bitmask[LOG]){
+		log_win.draw();
+	}
+
 	warn_win.draw();
+
 	if(action_win.is_visible){
 		action_win.draw();
 	}
+
 	config_win.draw();
 
 	if(alarum_win.is_animating()){
@@ -91,7 +138,12 @@ void window_demon::select_down(){
 		action_win.select_down();
 	}
 	else{
-		connect_win.select_down();
+		if(main_window_bitmask[CONNS]){
+			connect_win.select_down();
+		}
+		if(main_window_bitmask[LOG]){
+			log_win.select_down();
+		}
 	}
 }
 
@@ -100,7 +152,12 @@ void window_demon::select_up(){
 		action_win.select_up();
 	}
 	else{
-		connect_win.select_up();
+		if(main_window_bitmask[CONNS]){
+			connect_win.select_down();
+		}
+		if(main_window_bitmask[LOG]){
+			log_win.select_down();
+		}
 	}
 }
 
@@ -111,6 +168,7 @@ void window_demon::trigger_resize(){
 	action_win.resize();
 	config_win.resize();
 	alarum_win.resize();
+	log_win.resize();
 }
 
 #include "common.h"

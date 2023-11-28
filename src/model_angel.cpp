@@ -133,6 +133,10 @@ std::vector<conn_entry*> model_angel::get_connections(){
 	return this->connections;
 }
 
+std::vector<message*> model_angel::get_log(){
+	return this->message_log;
+}
+
 unsigned int model_angel::get_num_connections(){
 	return this->connections.size();
 }
@@ -810,7 +814,7 @@ void model_angel::add_message_to_log(int type, char* text){
 	//This was already allocated on the heap by the networking agent.
 	p->text = text;
 
-	message_log.push_back(p);
+	message_log.insert(message_log.begin(), p);
 }
 
 int model_angel::check_networking_agent(){
@@ -831,17 +835,17 @@ int model_angel::check_networking_agent(){
 			dbgprint("[MODEL_ANGEL] Received a message! Text reads: %s\n", messages[i].text);
 		}
 		switch(messages[i].type){
-			case MSG_TYPE_INFO:
+			case INFO:
 				//this->memo();
-				this->add_message_to_log(MSG_TYPE_INFO, messages[i].text);
+				this->add_message_to_log(INFO, messages[i].text);
 				break;
-			case MSG_TYPE_WARN:
+			case WARN:
 				this->warn();
-				this->add_message_to_log(MSG_TYPE_WARN, messages[i].text);
+				this->add_message_to_log(WARN, messages[i].text);
 				break;
-			case MSG_TYPE_ALERT:
+			case ALERT:
 				this->alert(messages[i].text);
-				this->add_message_to_log(MSG_TYPE_ALERT, messages[i].text);
+				this->add_message_to_log(ALERT, messages[i].text);
 				break;
 			default:
 				dbgprint("[MODEL_ANGEL] Message with unrecognised type somehow got through the filters!\n");
