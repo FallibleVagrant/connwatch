@@ -153,10 +153,10 @@ void window_demon::select_up(){
 	}
 	else{
 		if(main_window_bitmask[CONNS]){
-			connect_win.select_down();
+			connect_win.select_up();
 		}
 		if(main_window_bitmask[LOG]){
-			log_win.select_down();
+			log_win.select_up();
 		}
 	}
 }

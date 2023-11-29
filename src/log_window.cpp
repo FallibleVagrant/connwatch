@@ -34,7 +34,7 @@ void log_window::draw(){
 
 	print_header(win, "Log");
 
-	mvwprintw(win, 1, 1, "Type Text");
+	mvwprintw(win, 1, 1, "Type  Text");
 
 	std::vector<message*> message_log = angel_pointer->get_log();
 

@@ -44,7 +44,7 @@ class model_angel{
 
 		int get_good_buffer(char** buf, int* bufsize);
 		int fetch_tcp_data();
-		//int fetch_udp_data();
+		int fetch_udp_data();
 		//int fetch_raw_data();
 		int fetch_connections();
 		int check_networking_agent();

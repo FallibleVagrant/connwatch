@@ -43,6 +43,14 @@ static FILE* net_tcp6_open(){
 	return generic_proc_open("PROC_NET_TCP6", "net/tcp6");
 }
 
+static FILE* net_udp_open(){
+	return generic_proc_open("PROC_NET_UDP", "net/udp");
+}
+
+static FILE* net_udp6_open(){
+	return generic_proc_open("PROC_NET_UDP6", "net/udp6");
+}
+
 static FILE* slabinfo_open(){
 	return generic_proc_open("PROC_SLAB_INFO", "slabinfo");
 }
@@ -546,7 +554,7 @@ next:
 
 std::vector<conn_entry*> temp_connections;
 
-//Originally "tcp_show_line", but we print our info in window_demon instead, maybe?
+//Originally "tcp_show_line", but we print our info in window_demon instead.
 int tcp_parse_proc_line(char* line, int AF){
 	struct tcpstat s;
 	char* loc;
@@ -771,6 +779,189 @@ outerr:
 	}while(0);
 }
 
+//Originally "dgram_show_line", but we print our info in window_demon instead.
+int udp_parse_proc_line(char* line, int AF){
+	struct tcpstat s;
+	char* loc;
+	char* rem;
+	char* data;
+	char opt[256];
+	int n;
+	char *p;
+
+	if((p = strchr(line, ':')) == NULL){
+		dbgprint("Malformed /proc/net/udp line.\n");
+		return -1;
+	}
+	loc = p+2;
+
+	if((p = strchr(loc, ':')) == NULL){
+		dbgprint("Malformed /proc/net/udp line.\n");
+		return -1;
+	}
+	p[5] = '\0';
+	rem = p+6;
+
+	if((p = strchr(rem, ':')) == NULL){
+		dbgprint("Malformed /proc/net/udp line.\n");
+		return -1;
+	}
+	p[5] = '\0';
+	data = p+6;
+
+	/* Filtering code that, for now, we do not care about.
+	do {
+		int state = (data[1] >= 'A') ? (data[1] - 'A' + 10) : (data[1] - '0');
+
+		if (!(f->states & (1<<state)))
+			return 0;
+	} while (0);
+	*/
+
+	s.local.family = s.remote.family = AF;
+	//IPv4
+	if(AF == AF_INET){
+		sscanf(loc, "%x:%x", s.local.data, (unsigned*)&s.local_port);
+		sscanf(rem, "%x:%x", s.remote.data, (unsigned*)&s.remote_port);
+		s.local.bytelen = s.remote.bytelen = 4;
+	}
+	//IPv6
+	else{
+		sscanf(loc, "%08x%08x%08x%08x:%x",
+		       s.local.data,
+		       s.local.data+1,
+		       s.local.data+2,
+		       s.local.data+3,
+		       &s.local_port);
+		sscanf(rem, "%08x%08x%08x%08x:%x",
+		       s.remote.data,
+		       s.remote.data+1,
+		       s.remote.data+2,
+		       s.remote.data+3,
+		       &s.remote_port);
+		s.local.bytelen = s.remote.bytelen = 16;
+	}
+
+	/* more filtering code
+	if (f->f && run_ssfilter(f->f, &s) == 0)
+		return 0;
+	*/
+
+	opt[0] = '\0';
+	n = sscanf(data, "%x %x:%x %*x:%*x %*x %d %*d %u %d %llx %[^\n]\n",
+	       &s.state, &s.wq, &s.rq,
+	       &s.uid, &s.ino,
+	       &s.refcnt, &s.sk, opt);
+
+	if(n < 9){
+		opt[0] = '\0';
+	}
+
+	/*if(netid_width){
+		printf("%-*s ", netid_width, dg_proto);
+	}
+	if(state_width){
+		printf("%-*s ", state_width, sstate_name[s.state]);
+	}
+
+	printf("%-6d %-6d ", s.rq, s.wq);
+
+	formatted_print(&s.local, s.lport);
+	formatted_print(&s.remote, s.rport);
+
+	if(show_users){
+		char ubuf[4096];
+		if(find_users(s.ino, ubuf, sizeof(ubuf)) > 0){
+			printf(" users:(%s)", ubuf);
+		}
+	}
+
+	if(show_details){
+		if(s.uid){
+			printf(" uid=%u", (unsigned)s.uid);
+		}
+		printf(" ino=%u", s.ino);
+		printf(" sk=%llx", s.sk);
+		if(opt[0]){
+			printf(" opt:\"%s\"", opt);
+		}
+	}
+	printf("\n");
+	*/
+
+	//Load info into conn_entry.
+	conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
+
+	if(entry == NULL){
+		dbgprint("OOM\n");
+		return -1;
+	}
+
+	entry->netid = "UDP";
+	entry->state = sstate_name[s.state];
+	char* temp = format_addr_port(&s.local, s.local_port);
+	if(temp == NULL){
+		dbgprint("Could not format address.\n");
+		return -1;
+	}
+	entry->local_addr = temp;
+	temp = format_addr_port(&s.remote, s.remote_port);
+	if(temp == NULL){
+		dbgprint("Could not format address.\n");
+		return -1;
+	}
+	entry->rem_addr = temp;
+
+	temp_connections.push_back(entry);
+
+	return 0;
+}
+
+int model_angel::fetch_udp_data(){
+	dbgprint("Fetching udp data from /proc/net/udp...\n");
+
+	FILE *fp = NULL;
+
+	/*if(!getenv("PROC_NET_UDP") && !getenv("PROC_ROOT")
+	    && inet_show_netlink(f, NULL, IPPROTO_UDP) == 0){
+		return 0;
+	}*/
+
+	//dg_proto = UDP_PROTO;
+
+	//if (f->families&(1<<AF_INET)) {
+		if((fp = net_udp_open()) == NULL){
+			goto outerr;
+		}
+		if(generic_record_read(fp, udp_parse_proc_line, AF_INET)){
+			goto outerr;
+		}
+		fclose(fp);
+	//}
+
+	//if ((f->families&(1<<AF_INET6)) &&
+	//    (fp = net_udp6_open()) != NULL) {
+		if((fp = net_udp6_open()) == NULL){
+			goto outerr;
+		}
+		if(generic_record_read(fp, udp_parse_proc_line, AF_INET6)){
+			goto outerr;
+		}
+		fclose(fp);
+	//}
+	return 0;
+
+outerr:
+	do{
+		int saved_errno = errno;
+		if(fp){
+			fclose(fp);
+		}
+		errno = saved_errno;
+		return -1;
+	}while(0);
+}
+
 int model_angel::fetch_connections(){
 	int r;
 
@@ -780,27 +971,24 @@ int model_angel::fetch_connections(){
 		return -1;
 	}
 
-	dbgprint("Size of connections is: %lu.\n", connections.size());
-	dbgprint("Clearing connections...\n");
+	r = fetch_udp_data();
+	if(r == -1){
+		dbgprint("[MODEL_ANGEL] Could not fetch_udp_data() from system.\n");
+	}
+	//fetch_raw_data();
+	
 	for(conn_entry* entry : connections){
 		free(entry->local_addr);
 		free(entry->rem_addr);
 		free(entry);
 	}
 	connections.clear();
-	dbgprint("Size of connections is now: %lu.\n", connections.size());
 
-	dbgprint("transferring to model_angel->connections from temp_connections...\n");
-	dbgprint("num of temp_connections is: %lu.\n", temp_connections.size());
 	this->connections.clear();
 	for(conn_entry* entry : temp_connections){
 		this->connections.push_back(entry);
 	}
 	temp_connections.clear();
-	dbgprint("num of model_angel->connections is now: %lu.\n", this->connections.size());
-
-	//fetch_udp_data();
-	//fetch_raw_data();
 
 	return 0;
 }
