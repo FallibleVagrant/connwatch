@@ -192,10 +192,15 @@ int model_angel::get_good_buffer(char** buf, int* bufsize){
 	return 0;
 }
 
-int generic_record_read(FILE* fp, int (*worker)(char*, int), int AF){
+enum{
+	TCP,
+	UDP,
+};
+
+int model_angel::open_generic_proc(FILE* fp, int AF, int netid){
 	char line[256];
 
-	dbgprint("Reading a /proc file from generic_record_read()...\n");
+	dbgprint("[MODEL_ANGEL] Reading a /proc file...\n");
 
 	//Skip header in /proc/whatever.
 	if(fgets(line, sizeof(line), fp) == NULL){
@@ -212,13 +217,30 @@ int generic_record_read(FILE* fp, int (*worker)(char*, int), int AF){
 		}
 		line[n-1] = '\0';
 
-		if(worker(line, AF) < 0){
-			return 0;
+		switch(netid){
+			case TCP:
+				if(tcp_parse_proc_line(line, AF) < 0){
+					return 0;
+				}
+				break;
+			case UDP:
+				if(udp_parse_proc_line(line, AF) < 0){
+					return 0;
+				}
+				break;
 		}
 	}
 
 outerr:
 	return ferror(fp) ? -1 : 0;
+}
+
+int model_angel::open_proc_tcp(FILE* fp, int AF){
+	return open_generic_proc(fp, AF, TCP);
+}
+
+int model_angel::open_proc_udp(FILE* fp, int AF){
+	return open_generic_proc(fp, AF, UDP);
 }
 
 //Include for __u8, etc.
@@ -555,7 +577,7 @@ next:
 std::vector<conn_entry*> temp_connections;
 
 //Originally "tcp_show_line", but we print our info in window_demon instead.
-int tcp_parse_proc_line(char* line, int AF){
+int model_angel::tcp_parse_proc_line(char* line, int AF){
 	struct tcpstat s;
 	char* loc;
 	char* rem;
@@ -708,12 +730,14 @@ int tcp_parse_proc_line(char* line, int AF){
 	char* temp = format_addr_port(&s.local, s.local_port);
 	if(temp == NULL){
 		dbgprint("Could not format address.\n");
+		free(entry);
 		return -1;
 	}
 	entry->local_addr = temp;
 	temp = format_addr_port(&s.remote, s.remote_port);
 	if(temp == NULL){
 		dbgprint("Could not format address.\n");
+		free(entry);
 		return -1;
 	}
 	entry->rem_addr = temp;
@@ -745,7 +769,7 @@ int model_angel::fetch_tcp_data(){
 		goto outerr;
 	}
 	setbuffer(fp, buf, bufsize);
-	if(generic_record_read(fp, tcp_parse_proc_line, AF_INET)){
+	if(open_proc_tcp(fp, AF_INET)){
 		goto outerr;
 	}
 	fclose(fp);
@@ -755,7 +779,7 @@ int model_angel::fetch_tcp_data(){
 		goto outerr;
 	}
 	setbuffer(fp, buf, bufsize);
-	if(generic_record_read(fp, tcp_parse_proc_line, AF_INET6)){
+	if(open_proc_tcp(fp, AF_INET6)){
 		goto outerr;
 	}
 	fclose(fp);
@@ -780,7 +804,7 @@ outerr:
 }
 
 //Originally "dgram_show_line", but we print our info in window_demon instead.
-int udp_parse_proc_line(char* line, int AF){
+int model_angel::udp_parse_proc_line(char* line, int AF){
 	struct tcpstat s;
 	char* loc;
 	char* rem;
@@ -933,7 +957,7 @@ int model_angel::fetch_udp_data(){
 		if((fp = net_udp_open()) == NULL){
 			goto outerr;
 		}
-		if(generic_record_read(fp, udp_parse_proc_line, AF_INET)){
+		if(open_proc_udp(fp, AF_INET)){
 			goto outerr;
 		}
 		fclose(fp);
@@ -944,7 +968,7 @@ int model_angel::fetch_udp_data(){
 		if((fp = net_udp6_open()) == NULL){
 			goto outerr;
 		}
-		if(generic_record_read(fp, udp_parse_proc_line, AF_INET6)){
+		if(open_proc_udp(fp, AF_INET6)){
 			goto outerr;
 		}
 		fclose(fp);

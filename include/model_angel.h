@@ -4,6 +4,7 @@
 #include "connection_entry.h"
 
 #include <vector>
+#include <stdio.h>
 
 struct slabstat {
 	int socks;
@@ -48,6 +49,12 @@ class model_angel{
 		//int fetch_raw_data();
 		int fetch_connections();
 		int check_networking_agent();
+
+		int open_generic_proc(FILE* fp, int AF, int netid);
+		int tcp_parse_proc_line(char* line, int AF);
+		int open_proc_tcp(FILE* fp, int AF);
+		int udp_parse_proc_line(char* line, int AF);
+		int open_proc_udp(FILE* fp, int AF);
 };
 
 #endif
