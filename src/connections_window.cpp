@@ -23,6 +23,60 @@ connections_window::~connections_window(){
 	delwin(win);
 }
 
+#include <sys/socket.h>
+#include "options.h"
+#include "debug.h"
+
+//Prints one line of the connections_window using conn.
+void print_conn_line(WINDOW* win, conn_entry* conn){
+	dbgprint("[DEBUG] Printing a connection...\n");
+	wprintw(win, "%s   ", conn->netid);
+	wprintw(win, "%s ", conn->state);
+
+	char* local_hostname_or_addr;
+	char* local_service_or_port;
+	char* rem_hostname_or_addr;
+	char* rem_service_or_port;
+
+	//The defaults, the raw IP address and port number.
+	local_hostname_or_addr = conn->local_addr;
+	local_service_or_port = conn->local_port;
+	rem_hostname_or_addr = conn->rem_addr;
+	rem_service_or_port = conn->rem_port;
+
+	//Assign hostnames/services if enabled and available.
+	if(always_show_hostnames){
+		dbgprint("[DEBUG] Checking for a hostname...\n");
+		if(conn->local_hostname != NULL){
+			local_hostname_or_addr = conn->local_hostname;
+			dbgprint("[DEBUG] Local has a hostname! It is: %s\n", local_hostname_or_addr);
+		}
+		if(conn->rem_hostname != NULL){
+			rem_hostname_or_addr = conn->rem_hostname;
+			dbgprint("[DEBUG] Remote has a hostname! It is: %s\n", rem_hostname_or_addr);
+		}
+	}
+	if(always_show_services){
+		if(conn->local_service != NULL){
+			local_service_or_port = conn->local_service;
+		}
+		if(conn->rem_service != NULL){
+			rem_service_or_port = conn->rem_service;
+		}
+	}
+
+	//IPv4
+	if(conn->ip_ver == AF_INET){
+		wprintw(win, "%s:%s ", local_hostname_or_addr, local_service_or_port);
+		wprintw(win, "%s:%s", rem_hostname_or_addr, rem_service_or_port);
+	}
+	//IPv6
+	else{
+		wprintw(win, "[%s]:%s ", local_hostname_or_addr, local_service_or_port);
+		wprintw(win, "[%s]:%s", rem_hostname_or_addr, rem_service_or_port);
+	}
+}
+
 #include "debug.h"
 #include "main_window_header.h"
 #include "colors.h"
@@ -79,10 +133,10 @@ void connections_window::draw(){
 			break;
 		}
 
-		mvwprintw(win, start_y + y_offset, 1, "%s   ", connections[i]->netid);
-		wprintw(win, "%s\t", connections[i]->state);
-		wprintw(win, "%s\t", connections[i]->local_addr);
-		wprintw(win, "%s", connections[i]->rem_addr);
+		conn_entry* conn = connections[i];
+
+		wmove(win, start_y + y_offset, 1);
+		print_conn_line(win, conn);
 
 		if(shown_window_choice == y_offset){
 			mvwchgat(win, start_y + y_offset, 1, COLS-2, A_REVERSE, 0, NULL);

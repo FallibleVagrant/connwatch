@@ -204,14 +204,14 @@ int model_angel::open_generic_proc(FILE* fp, int AF, int netid){
 
 	//Skip header in /proc/whatever.
 	if(fgets(line, sizeof(line), fp) == NULL){
-		dbgprint("Could not read header of a /proc file.\n");
+		dbgprint("[MODEL_ANGEL] Could not read header of a /proc file.\n");
 		goto outerr;
 	}
 
 	while(fgets(line, sizeof(line), fp) != NULL){
 		int n = strlen(line);
 		if(n == 0 || line[n-1] != '\n'){
-			dbgprint("Failed to parse a line in a /proc file.\n");
+			dbgprint("[MODEL_ANGEL] Failed to parse a line in a /proc file.\n");
 			errno = EINVAL;
 			return -1;
 		}
@@ -287,71 +287,107 @@ static const char* sstate_name[] = {
 	[TCP_CLOSING] = "CLOSING",
 };
 
-//Originally format_host.
-const char* format_addr(int AF, int len, const void* addr, char* buf, int buflen){
-	//dbgprint("Formatting address from binary to text...\n");
-	//TODO: add this functionality.
-	if(0){	//An option would be present here; for now we do nothing to resolve the hostname.
-		;
+struct sockaddr* inet_prefix_to_sockaddr(const inet_prefix* addr, unsigned int* len, int port){
+	struct sockaddr* sa;
+
+	struct sockaddr_in* sin;
+	struct sockaddr_in6* sin6;
+
+dbgprint("[DEBUG] Entering inet_prefix_to_sockaddr...\n");
+
+	//IPv4
+	if(addr->family == AF_INET){
+dbgprint("[DEBUG] IP is v4...\n");
+		sin = (struct sockaddr_in*) calloc(1, sizeof(struct sockaddr_in));
+
+		sin->sin_family = AF_INET;
+dbgprint("[DEBUG] port is: %08x\n", port);
+dbgprint("[DEBUG] sin_port is: %08x\n", port);
+		sin->sin_port = port;
+		memcpy(&(sin->sin_addr), addr->data, 4 * 1);
+dbgprint("[DEBUG] addr->data is: %08x\n", *addr->data);
+
+		sa = (struct sockaddr*) sin;
+
+		*len = sizeof(struct sockaddr_in);
+	}
+	//IPv6
+	else{
+dbgprint("[DEBUG] IP is v6...\n");
+		sin6 = (struct sockaddr_in6*) calloc(1, sizeof(struct sockaddr_in6));
+
+		sin6->sin6_family = addr->family;
+dbgprint("[DEBUG] port is: %08x\n", port);
+dbgprint("[DEBUG] sin_port is: %08x\n", port);
+		sin6->sin6_port = port;
+		memcpy(&(sin6->sin6_addr), addr->data, 4 * 4);
+dbgprint("[DEBUG] addr->data is: %032x\n", *addr->data);
+
+		sa = (struct sockaddr*) sin6;
+
+		*len = sizeof(struct sockaddr_in6);
 	}
 
-	//Originally returns rt_addr_n2a, which switches b/t different AFs, but here we do this.
-	return inet_ntop(AF, addr, buf, buflen);
+dbgprint("[DEBUG] sockaddr->sa_family: %08x\n", sa->sa_family);
+dbgprint("For reference, AF_INET6 is: %08x\n", AF_INET6);
+
+	return sa;
 }
 
-static const char* resolve_service(int port){
-	static char buf[256];
-	//static struct scache cache[256];
+#include <sys/socket.h>
+#include <netdb.h>
+
+char* resolve_service(inet_prefix* addr, int port){
+	unsigned int buflen = 128;
+	char* buf = (char*) calloc(buflen, sizeof(char));
+
+dbgprint("[DEBUG] Resolving a service...\n");
 
 	if(port == 0){
-		buf[0] = '*';
-		buf[1] = '\0';
-		return buf;
-	}
-
-	//TODO: actually add this functionality.
-	if(0){	//An option would be present here; for now we do nothing to actually resolve a service.
-		;
-	}
-
-	sprintf(buf, "%u", port);
-	return buf;
-}
-
-//Originally "formatted_print"
-char* format_addr_port(const inet_prefix* a, int port){
-	char buf[1024];
-	char* res;
-
-	if((res = (char*) calloc(128, sizeof(char))) == NULL){
+		free(buf);
 		return NULL;
 	}
 
-	//IPv4
-	if(a->family == AF_INET){
-		if(a->data[0] == '\0'){
-			buf[0] = '*';
-			buf[1] = '\0';
-		}
-		else{
-			format_addr(AF_INET, 4, a->data, buf, sizeof(buf));
-		}
-	}
-	//IPv6
-	else{
-		format_addr(a->family, 16, a->data, buf, sizeof(buf));
+	unsigned int addrlen;
+	struct sockaddr* sa = inet_prefix_to_sockaddr(addr, &addrlen, port);
+
+	int r = getnameinfo(sa, addrlen, 0, 0, buf, buflen, 0);
+	free(sa);
+	if(r != 0){
+dbgprint("[DEBUG] getnameinfo returned err: %s\n", gai_strerror(r));
+		return NULL;
 	}
 
-	//IPv4
-	if(a->family == AF_INET){
-		sprintf(res, "%s:%s", buf, resolve_service(port));
-	}
-	//IPv6
-	else{
-		sprintf(res, "[%s]:%s", buf, resolve_service(port));
+	return buf;
+}
+
+//Not really hostname, moreso domain name.
+char* resolve_hostname(const inet_prefix* addr, int port){
+	unsigned int buflen = 128;
+	char* buf = (char*) calloc(buflen, sizeof(char));
+
+dbgprint("[DEBUG] Resolving a hostname...\n");
+
+	if(addr->family == AF_INET){
+		if(addr->data[0] == '\0'){
+dbgprint("[DEBUG] addr is zero! Returning NULL...\n");
+			free(buf);
+			return NULL;
+		}
 	}
 
-	return res;
+	unsigned int addrlen;
+	struct sockaddr* sa = inet_prefix_to_sockaddr(addr, &addrlen, port);
+
+	int r = getnameinfo(sa, addrlen, buf, buflen, 0, 0, 0);
+	free(sa);
+	if(r != 0){
+dbgprint("[DEBUG] getnameinfo returned err: %s\n", gai_strerror(r));
+		return NULL;
+	}
+dbgprint("[DEBUG] getnameinfo returned something! It is: %s\n", buf);
+
+	return buf;
 }
 
 static const char* tmr_name[] = {
@@ -410,7 +446,7 @@ static const char* print_hz_timer(int timeout){
 	return print_ms_timer(((timeout*1000) + hz-1)/hz);
 }
 
-struct user_ent {
+struct user_ent{
 	struct user_ent* next;
 	unsigned int ino;
 	int pid;
@@ -574,7 +610,20 @@ next:
 	return cnt;
 }
 
-std::vector<conn_entry*> temp_connections;
+char* port_to_string(int port){
+	char* buf = (char*) calloc(64, sizeof(char));
+
+	if(port == 0){
+		buf[0] = '*';
+		buf[1] = '\0';
+		return buf;
+	}
+
+	sprintf(buf, "%u", port);
+	return buf;
+}
+
+#include "options.h"
 
 //Originally "tcp_show_line", but we print our info in window_demon instead.
 int model_angel::tcp_parse_proc_line(char* line, int AF){
@@ -587,20 +636,20 @@ int model_angel::tcp_parse_proc_line(char* line, int AF){
 	char* p;
 
 	if((p = strchr(line, ':')) == NULL){
-		dbgprint("Malformed /proc/net/tcp line.\n");
+		dbgprint("[MODEL_ANGEL] Malformed /proc/net/tcp line.\n");
 		return -1;
 	}
 	loc = p + 2;
 
 	if((p = strchr(loc, ':')) == NULL){
-		dbgprint("Malformed /proc/net/tcp line.\n");
+		dbgprint("[MODEL_ANGEL] Malformed /proc/net/tcp line.\n");
 		return -1;
 	}
 	p[5] = '\0';
 	rem = p + 6;
 
 	if((p = strchr(rem, ':')) == NULL){
-		dbgprint("Malformed /proc/net/tcp line.\n");
+		dbgprint("[MODEL_ANGEL] Malformed /proc/net/tcp line.\n");
 		return -1;
 	}
 	p[5] = '\0';
@@ -720,29 +769,42 @@ int model_angel::tcp_parse_proc_line(char* line, int AF){
 	//Load info into conn_entry.
 	conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
 
-	if(entry == NULL){
-		dbgprint("OOM\n");
-		return -1;
-	}
-
 	entry->netid = "TCP";
 	entry->state = sstate_name[s.state];
-	char* temp = format_addr_port(&s.local, s.local_port);
-	if(temp == NULL){
-		dbgprint("Could not format address.\n");
-		free(entry);
-		return -1;
-	}
-	entry->local_addr = temp;
-	temp = format_addr_port(&s.remote, s.remote_port);
-	if(temp == NULL){
-		dbgprint("Could not format address.\n");
-		free(entry);
-		return -1;
-	}
-	entry->rem_addr = temp;
 
-	temp_connections.push_back(entry);
+	//Local and remote version should be the same.
+	entry->ip_ver = s.local.family;
+
+	//Local
+	if(always_resolve_hostnames){
+		entry->local_hostname = resolve_hostname(&s.local, s.local_port);
+	}
+
+	unsigned int buflen = 128;
+	char* buf = (char*) calloc(buflen, sizeof(char));
+	inet_ntop(s.local.family, s.local.data, buf, buflen);
+	entry->local_addr = buf;
+
+	if(always_resolve_services){
+		entry->local_service = resolve_service(&s.local, s.local_port);
+	}
+	entry->local_port = port_to_string(s.local_port);
+
+	//Remote
+	if(always_resolve_hostnames){
+		entry->rem_hostname = resolve_hostname(&s.remote, s.remote_port);
+	}
+
+	buf = (char*) calloc(buflen, sizeof(char));
+	inet_ntop(s.remote.family, s.remote.data, buf, buflen);
+	entry->rem_addr = buf;
+
+	if(always_resolve_services){
+		entry->rem_service = resolve_service(&s.remote, s.remote_port);
+	}
+	entry->rem_port = port_to_string(s.remote_port);
+
+	this->connections.push_back(entry);
 
 	return 0;
 }
@@ -916,27 +978,42 @@ int model_angel::udp_parse_proc_line(char* line, int AF){
 	//Load info into conn_entry.
 	conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
 
-	if(entry == NULL){
-		dbgprint("OOM\n");
-		return -1;
-	}
-
 	entry->netid = "UDP";
 	entry->state = sstate_name[s.state];
-	char* temp = format_addr_port(&s.local, s.local_port);
-	if(temp == NULL){
-		dbgprint("Could not format address.\n");
-		return -1;
-	}
-	entry->local_addr = temp;
-	temp = format_addr_port(&s.remote, s.remote_port);
-	if(temp == NULL){
-		dbgprint("Could not format address.\n");
-		return -1;
-	}
-	entry->rem_addr = temp;
 
-	temp_connections.push_back(entry);
+	//Local and remote version should be the same.
+	entry->ip_ver = s.local.family;
+
+	//Local
+	if(always_resolve_hostnames){
+		entry->local_hostname = resolve_hostname(&s.local, s.local_port);
+	}
+
+	unsigned int buflen = 128;
+	char* buf = (char*) calloc(buflen, sizeof(char));
+	inet_ntop(s.local.family, s.local.data, buf, buflen);
+	entry->local_addr = buf;
+
+	if(always_resolve_services){
+		entry->local_service = resolve_service(&s.local, s.local_port);
+	}
+	entry->local_port = port_to_string(s.local_port);
+
+	//Remote
+	if(always_resolve_hostnames){
+		entry->rem_hostname = resolve_hostname(&s.remote, s.remote_port);
+	}
+
+	buf = (char*) calloc(buflen, sizeof(char));
+	inet_ntop(s.remote.family, s.remote.data, buf, buflen);
+	entry->rem_addr = buf;
+
+	if(always_resolve_services){
+		entry->rem_service = resolve_service(&s.remote, s.remote_port);
+	}
+	entry->rem_port = port_to_string(s.remote_port);
+
+	this->connections.push_back(entry);
 
 	return 0;
 }
@@ -987,11 +1064,17 @@ outerr:
 }
 
 int model_angel::fetch_connections(){
+	//Deallocate and clear.
+	for(conn_entry* entry : connections){
+		free_conn_entry(entry);
+	}
+	connections.clear();
+
 	int r;
 
 	r = fetch_tcp_data();
 	if(r == -1){
-		dbgprint("Could not fetch_tcp_data() from system.\n");
+		dbgprint("[MODEL_ANGEL] Could not fetch_tcp_data() from system.\n");
 		return -1;
 	}
 
@@ -1001,19 +1084,6 @@ int model_angel::fetch_connections(){
 	}
 	//fetch_raw_data();
 	
-	for(conn_entry* entry : connections){
-		free(entry->local_addr);
-		free(entry->rem_addr);
-		free(entry);
-	}
-	connections.clear();
-
-	this->connections.clear();
-	for(conn_entry* entry : temp_connections){
-		this->connections.push_back(entry);
-	}
-	temp_connections.clear();
-
 	return 0;
 }
 
@@ -1068,11 +1138,16 @@ int model_angel::check_networking_agent(){
 	return 0;
 }
 
+#include "common.h"
+
 int model_angel::update(){
-	int r = fetch_connections();
-	if(r == -1){
-		dbgprint("Could not fetch_connections() from system.\n");
-		return -1;
+	int r;
+	if(ticker % 2 == 1){
+		r = fetch_connections();
+		if(r == -1){
+			dbgprint("Could not fetch_connections() from system.\n");
+			return -1;
+		}
 	}
 
 	r = check_networking_agent();

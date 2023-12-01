@@ -29,7 +29,6 @@ void compute_range_of_page(
 		int* starting_entry_on_shown_page,
 		int* shown_window_choice){
 
-
 	*shown_page = 0;
 	*num_view_pages = 0;
 	*max_items_on_shown_page = 0;
@@ -81,7 +80,7 @@ void compute_range_of_page(
 			*num_view_pages = num_middle_pages + 2;
 
 			//Still on the first view_page.
-			if(choice <= MAX_ITEMS_PER_PAGE - 1){
+			if(choice < MAX_ITEMS_PER_PAGE - 1){
 				*shown_window_choice = choice;
 				*shown_page = 0;
 				*max_items_on_shown_page = MAX_ITEMS_PER_PAGE - 1;
