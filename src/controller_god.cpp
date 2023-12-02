@@ -76,6 +76,15 @@ int controller_god::handle_input(int button_press){
 		case 'o':
 			demon.show_log();
 			break;
+		case 'n':
+			demon.toggle_hostnames();
+			break;
+		case 'v':
+			demon.toggle_services();
+			break;
+		case 'S':
+			demon.toggle_sound();
+			break;
 		//Testing.
 		case '0':
 			angel.warn();

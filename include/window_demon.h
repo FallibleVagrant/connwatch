@@ -35,6 +35,10 @@ class window_demon{
 
 		void show_connections();
 		void show_log();
+
+		void toggle_hostnames();
+		void toggle_services();
+		void toggle_sound();
 	private:
 		model_angel* angel_pointer;
 

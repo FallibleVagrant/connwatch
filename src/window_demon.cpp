@@ -184,3 +184,15 @@ void window_demon::trigger_alarum_popup(const char* alarum_message){
 	}
 	alarum_win.start_animating(ticker);
 }
+
+void window_demon::toggle_hostnames(){
+	config_win.toggle_hostnames();
+}
+
+void window_demon::toggle_services(){
+	config_win.toggle_services();
+}
+
+void window_demon::toggle_sound(){
+	config_win.toggle_sound();
+}

@@ -12,10 +12,11 @@ class config_bar : abstract_window{
 
 		void draw();
 		void resize();
+		void toggle_hostnames();
+		void toggle_services();
+		void toggle_sound();
 	private:
 		WINDOW* win;
-		char buf[256];
-		size_t buflen;
 };
 
 #endif
