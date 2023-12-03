@@ -6,17 +6,10 @@
 #include <vector>
 #include <stdio.h>
 
-struct slabstat {
-	int socks;
-	int tcp_ports;
-	int tcp_tws;
-	int tcp_syns;
-	int skbs;
-};
-
 class window_demon;
 
 #include "networking_agent.h"
+#include "proc_reader.h"
 
 class model_angel{
 	public:
@@ -35,26 +28,17 @@ class model_angel{
 		void reset_alerts_and_warns();
 		void add_message_to_log(int type, char* text);
 	private:
-		struct slabstat slabstat;
 		window_demon* demon_pointer;
 		std::vector<conn_entry*> connections;
-		int num_warnings;
-		int num_alerts;
-		networking_agent net_agent;
 		std::vector<message*> message_log;
 
-		int get_good_buffer(char** buf, int* bufsize);
-		int fetch_tcp_data();
-		int fetch_udp_data();
-		//int fetch_raw_data();
-		int fetch_connections();
-		int check_networking_agent();
+		int num_warnings;
+		int num_alerts;
 
-		int open_generic_proc(FILE* fp, int AF, int netid);
-		int tcp_parse_proc_line(char* line, int AF);
-		int open_proc_tcp(FILE* fp, int AF);
-		int udp_parse_proc_line(char* line, int AF);
-		int open_proc_udp(FILE* fp, int AF);
+		networking_agent net_agent;
+		proc_reader proc_read;
+
+		int check_networking_agent();
 };
 
 #endif
