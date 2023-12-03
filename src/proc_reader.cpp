@@ -64,7 +64,7 @@ int get_slabstat(struct slabstat* s){
 
 	fp = slabinfo_open();
 	if(!fp){
-		dbgprint("Could not open /proc/slabinfo.\n");
+		dbgprint("[PROC_READER] Could not open /proc/slabinfo.\n");
 		return -1;
 	}
 
@@ -237,19 +237,13 @@ struct sockaddr* inet_prefix_to_sockaddr(const inet_prefix* addr, unsigned int* 
 	struct sockaddr_in* sin;
 	struct sockaddr_in6* sin6;
 
-dbgprint("[DEBUG] Entering inet_prefix_to_sockaddr...\n");
-
 	//IPv4
 	if(addr->family == AF_INET){
-dbgprint("[DEBUG] IP is v4...\n");
 		sin = (struct sockaddr_in*) calloc(1, sizeof(struct sockaddr_in));
 
 		sin->sin_family = AF_INET;
-dbgprint("[DEBUG] port is: %08x\n", port);
-dbgprint("[DEBUG] sin_port is: %08x\n", port);
-		sin->sin_port = port;
+		sin->sin_port = htons(port);
 		memcpy(&(sin->sin_addr), addr->data, 4 * 1);
-dbgprint("[DEBUG] addr->data is: %08x\n", *addr->data);
 
 		sa = (struct sockaddr*) sin;
 
@@ -257,23 +251,16 @@ dbgprint("[DEBUG] addr->data is: %08x\n", *addr->data);
 	}
 	//IPv6
 	else{
-dbgprint("[DEBUG] IP is v6...\n");
 		sin6 = (struct sockaddr_in6*) calloc(1, sizeof(struct sockaddr_in6));
 
 		sin6->sin6_family = addr->family;
-dbgprint("[DEBUG] port is: %08x\n", port);
-dbgprint("[DEBUG] sin_port is: %08x\n", port);
-		sin6->sin6_port = port;
+		sin6->sin6_port = htons(port);
 		memcpy(&(sin6->sin6_addr), addr->data, 4 * 4);
-dbgprint("[DEBUG] addr->data is: %032x\n", *addr->data);
 
 		sa = (struct sockaddr*) sin6;
 
 		*len = sizeof(struct sockaddr_in6);
 	}
-
-dbgprint("[DEBUG] sockaddr->sa_family: %08x\n", sa->sa_family);
-dbgprint("For reference, AF_INET6 is: %08x\n", AF_INET6);
 
 	return sa;
 }
@@ -301,6 +288,7 @@ dbgprint("[DEBUG] Resolving a service...\n");
 dbgprint("[DEBUG] getnameinfo returned err: %s\n", gai_strerror(r));
 		return NULL;
 	}
+dbgprint("[DEBUG] getnameinfo returned something! It is: %s\n", buf);
 
 	return buf;
 }

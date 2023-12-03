@@ -29,7 +29,6 @@ connections_window::~connections_window(){
 
 //Prints one line of the connections_window using conn.
 void print_conn_line(WINDOW* win, conn_entry* conn){
-	dbgprint("[DEBUG] Printing a connection...\n");
 	wprintw(win, "%s   ", conn->netid);
 	wprintw(win, "%s ", conn->state);
 
