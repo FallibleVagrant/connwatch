@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include "connection_entry.h"
+#include "dns_cache.h"
 
 struct slabstat {
 	int socks;
@@ -13,6 +14,9 @@ struct slabstat {
 	int tcp_syns;
 	int skbs;
 };
+
+struct __inet_prefix;
+typedef __inet_prefix inet_prefix;
 
 //For reading /proc/net/whatever and also handling DNS requests.
 class proc_reader{
@@ -25,6 +29,7 @@ class proc_reader{
 	private:
 		struct slabstat slabstat;
 		std::vector<conn_entry*>* connections_pointer;
+		dns_cache cache;
 
 		int get_good_buffer(char** buf, int* bufsize);
 		int fetch_tcp_data();
@@ -36,6 +41,8 @@ class proc_reader{
 		int open_proc_tcp(FILE* fp, int AF);
 		int udp_parse_proc_line(char* line, int AF);
 		int open_proc_udp(FILE* fp, int AF);
+
+		char* resolve_hostname(const inet_prefix* addr, int port);
 };
 
 #endif

@@ -190,7 +190,7 @@ int proc_reader::open_proc_udp(FILE* fp, int AF){
 //Include for __u8, etc.
 #include <asm/types.h>
 
-typedef struct {
+typedef struct __inet_prefix{
 	__u8 family;
 	__u8 bytelen;
 	__s16 bitlen;
@@ -290,16 +290,20 @@ char* resolve_service(inet_prefix* addr, int port){
 }
 
 //Not really hostname, moreso domain name.
-char* resolve_hostname(const inet_prefix* addr, int port){
-	unsigned int buflen = 128;
-	char* buf = (char*) calloc(buflen, sizeof(char));
-
+char* proc_reader::resolve_hostname(const inet_prefix* addr, int port){
 	if(addr->family == AF_INET){
 		if(addr->data[0] == '\0'){
-			free(buf);
 			return NULL;
 		}
 	}
+
+	char* name = cache.search(addr->data);
+	if(name != NULL){
+		return name;
+	}
+
+	unsigned int buflen = 128;
+	char* buf = (char*) calloc(buflen, sizeof(char));
 
 	unsigned int addrlen;
 	struct sockaddr* sa = inet_prefix_to_sockaddr(addr, &addrlen, port);
@@ -309,6 +313,8 @@ char* resolve_hostname(const inet_prefix* addr, int port){
 	if(r != 0){
 		return NULL;
 	}
+
+	cache.insert(addr->data, buf);
 
 	return buf;
 }
