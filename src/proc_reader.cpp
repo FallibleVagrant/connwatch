@@ -272,8 +272,6 @@ char* resolve_service(inet_prefix* addr, int port){
 	unsigned int buflen = 128;
 	char* buf = (char*) calloc(buflen, sizeof(char));
 
-dbgprint("[DEBUG] Resolving a service...\n");
-
 	if(port == 0){
 		free(buf);
 		return NULL;
@@ -285,10 +283,8 @@ dbgprint("[DEBUG] Resolving a service...\n");
 	int r = getnameinfo(sa, addrlen, 0, 0, buf, buflen, 0);
 	free(sa);
 	if(r != 0){
-dbgprint("[DEBUG] getnameinfo returned err: %s\n", gai_strerror(r));
 		return NULL;
 	}
-dbgprint("[DEBUG] getnameinfo returned something! It is: %s\n", buf);
 
 	return buf;
 }

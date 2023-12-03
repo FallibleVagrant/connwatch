@@ -39,6 +39,7 @@ class window_demon{
 		void toggle_hostnames();
 		void toggle_services();
 		void toggle_sound();
+		void cycle_sort_method();
 	private:
 		model_angel* angel_pointer;
 

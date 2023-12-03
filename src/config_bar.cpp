@@ -34,7 +34,26 @@ void config_bar::draw(){
 	wattroff(win, COLOR_PAIR(ORANGE_AND_BLACK));
 	wprintw(win, "]ort-by: ");
 
-	wprintw(win, "none");
+	switch(sort_method){
+		case SORT_NONE:
+			wprintw(win, "none");
+			break;
+		case SORT_NETID_ASC:
+			wprintw(win, "netid asc");
+			break;
+		case SORT_NETID_DESC:
+			wprintw(win, "netid desc");
+			break;
+		case SORT_STATE_ASC:
+			wprintw(win, "state asc");
+			break;
+		case SORT_STATE_DESC:
+			wprintw(win, "state desc");
+			break;
+		default:
+			wprintw(win, "err");
+			break;
+	}
 
 	wprintw(win, " | ");
 
@@ -109,4 +128,11 @@ void config_bar::toggle_services(){
 
 void config_bar::toggle_sound(){
 	sound_enabled = !sound_enabled;
+}
+
+void config_bar::cycle_sort_method(){
+	sort_method++;
+	if(sort_method >= num_sort_methods){
+		sort_method = 0;
+	}
 }

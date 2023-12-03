@@ -85,6 +85,9 @@ int controller_god::handle_input(int button_press){
 		case 'S':
 			demon.toggle_sound();
 			break;
+		case 's':
+			demon.cycle_sort_method();
+			break;
 		//Testing.
 		case '0':
 			angel.warn();

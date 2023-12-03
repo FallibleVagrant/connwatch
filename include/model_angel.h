@@ -39,6 +39,7 @@ class model_angel{
 		proc_reader proc_read;
 
 		int check_networking_agent();
+		void sort_connections();
 };
 
 #endif

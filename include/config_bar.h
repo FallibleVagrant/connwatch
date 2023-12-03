@@ -15,6 +15,7 @@ class config_bar : abstract_window{
 		void toggle_hostnames();
 		void toggle_services();
 		void toggle_sound();
+		void cycle_sort_method();
 	private:
 		WINDOW* win;
 };

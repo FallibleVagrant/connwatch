@@ -121,6 +121,36 @@ int model_angel::check_networking_agent(){
 	return 0;
 }
 
+#include "options.h"
+#include <string.h>
+#include <algorithm>
+
+//Thank you to:
+//https://stackoverflow.com/questions/2758080/how-to-sort-an-stl-vector
+//for example code.
+void model_angel::sort_connections(){
+	switch(sort_method){
+		case SORT_NONE:
+			;
+			break;
+		case SORT_NETID_ASC:
+			std::sort(connections.begin(), connections.end(), [] (conn_entry* a, conn_entry* b) { return strcmp(a->netid, b->netid) < 0; });
+			break;
+		case SORT_NETID_DESC:
+			std::sort(connections.begin(), connections.end(), [] (conn_entry* a, conn_entry* b) { return strcmp(a->netid, b->netid) > 0; });
+			break;
+		case SORT_STATE_ASC:
+			std::sort(connections.begin(), connections.end(), [] (conn_entry* a, conn_entry* b) { return strcmp(a->state, b->state) < 0; });
+			break;
+		case SORT_STATE_DESC:
+			std::sort(connections.begin(), connections.end(), [] (conn_entry* a, conn_entry* b) { return strcmp(a->state, b->state) > 0; });
+			break;
+		default:
+			dbgprint("[MODEL_ANGEL] Attempted to sort by an unknown sort method!\n");
+			break;
+	}
+}
+
 #include "common.h"
 
 int model_angel::update(){
@@ -137,6 +167,8 @@ int model_angel::update(){
 			dbgprint("Could not fetch_connections() from system.\n");
 			return -1;
 		}
+
+		this->sort_connections();
 	}
 
 	r = check_networking_agent();

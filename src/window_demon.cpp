@@ -196,3 +196,7 @@ void window_demon::toggle_services(){
 void window_demon::toggle_sound(){
 	config_win.toggle_sound();
 }
+
+void window_demon::cycle_sort_method(){
+	config_win.cycle_sort_method();
+}
