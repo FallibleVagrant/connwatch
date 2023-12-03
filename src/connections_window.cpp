@@ -32,6 +32,9 @@ void print_conn_line(WINDOW* win, conn_entry* conn){
 	wprintw(win, "%s   ", conn->netid);
 	wprintw(win, "%s ", conn->state);
 
+	int y = getcury(win);
+	wmove(win, y, 18);
+
 	char* local_hostname_or_addr;
 	char* local_service_or_port;
 	char* rem_hostname_or_addr;
@@ -66,12 +69,12 @@ void print_conn_line(WINDOW* win, conn_entry* conn){
 
 	//IPv4
 	if(conn->ip_ver == AF_INET){
-		wprintw(win, "%s:%s ", local_hostname_or_addr, local_service_or_port);
+		wprintw(win, "%s:%s     ", local_hostname_or_addr, local_service_or_port);
 		wprintw(win, "%s:%s", rem_hostname_or_addr, rem_service_or_port);
 	}
 	//IPv6
 	else{
-		wprintw(win, "[%s]:%s ", local_hostname_or_addr, local_service_or_port);
+		wprintw(win, "[%s]:%s     ", local_hostname_or_addr, local_service_or_port);
 		wprintw(win, "[%s]:%s", rem_hostname_or_addr, rem_service_or_port);
 	}
 }
@@ -88,7 +91,7 @@ void connections_window::draw(){
 
 	print_header(win, "Connections");
 
-	mvwprintw(win, 1, 1, "Netid State etc.");
+	mvwprintw(win, 1, 1, "Netid State      Local Addr:Port      Rem Addr:Port");
 
 	std::vector<conn_entry*> connections = angel_pointer->get_connections();
 
@@ -124,7 +127,10 @@ void connections_window::draw(){
 		mvwprintw(win, start_y + max_items_on_shown_page, COLS/2, "vvv");
 	}
 
-	mvwprintw(win, 1, 20, "%d / %d", shown_page, num_view_pages - 1);
+	//Hack to find what the length will be after formatting.
+	//https://stackoverflow.com/questions/26910479/find-the-length-of-a-formatted-string-in-c
+	int len = snprintf(NULL, 0, "%d / %d", shown_page, num_view_pages - 1);
+	mvwprintw(win, 1, CONN_WIN_WIDTH - len - 2, "%d / %d", shown_page, num_view_pages - 1);
 
 	int y_offset = 0;
 	for(int i = starting_entry; i < max_items_on_shown_page + starting_entry; i++){
