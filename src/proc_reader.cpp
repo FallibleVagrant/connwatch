@@ -701,16 +701,24 @@ int proc_reader::tcp_parse_proc_line(char* line, int AF){
 	entry->netid = "TCP";
 	entry->state = sstate_name[s.state];
 
-	//Local and remote version should be the same.
+	//Local and remote IP version should be the same.
 	entry->ip_ver = s.local.family;
 
-	//Local
+	unsigned int buflen = 128;
+	char* buf = (char*) calloc(buflen, sizeof(char));
+	snprintf(buf, buflen, "%d", s.rq);
+	entry->read_queue = buf;
+	buf = (char*) calloc(buflen, sizeof(char));
+	snprintf(buf, buflen, "%d", s.wq);
+	entry->write_queue = buf;
+
+	//Local ================================================================
 	if(always_resolve_hostnames){
 		entry->local_hostname = resolve_hostname(&s.local, s.local_port);
 	}
 
-	unsigned int buflen = 128;
-	char* buf = (char*) calloc(buflen, sizeof(char));
+	buflen = 128;
+	buf = (char*) calloc(buflen, sizeof(char));
 	inet_ntop(s.local.family, s.local.data, buf, buflen);
 	entry->local_addr = buf;
 
@@ -719,7 +727,7 @@ int proc_reader::tcp_parse_proc_line(char* line, int AF){
 	}
 	entry->local_port = port_to_string(s.local_port);
 
-	//Remote
+	//Remote ================================================================
 	if(always_resolve_hostnames){
 		entry->rem_hostname = resolve_hostname(&s.remote, s.remote_port);
 	}
@@ -913,13 +921,21 @@ int proc_reader::udp_parse_proc_line(char* line, int AF){
 	//Local and remote version should be the same.
 	entry->ip_ver = s.local.family;
 
-	//Local
+	unsigned int buflen = 128;
+	char* buf = (char*) calloc(buflen, sizeof(char));
+	snprintf(buf, buflen, "%d", s.rq);
+	entry->read_queue = buf;
+	buf = (char*) calloc(buflen, sizeof(char));
+	snprintf(buf, buflen, "%d", s.wq);
+	entry->write_queue = buf;
+
+	//Local =============================================================
 	if(always_resolve_hostnames){
 		entry->local_hostname = resolve_hostname(&s.local, s.local_port);
 	}
 
-	unsigned int buflen = 128;
-	char* buf = (char*) calloc(buflen, sizeof(char));
+	buflen = 128;
+	buf = (char*) calloc(buflen, sizeof(char));
 	inet_ntop(s.local.family, s.local.data, buf, buflen);
 	entry->local_addr = buf;
 
@@ -928,7 +944,7 @@ int proc_reader::udp_parse_proc_line(char* line, int AF){
 	}
 	entry->local_port = port_to_string(s.local_port);
 
-	//Remote
+	//Remote ============================================================
 	if(always_resolve_hostnames){
 		entry->rem_hostname = resolve_hostname(&s.remote, s.remote_port);
 	}

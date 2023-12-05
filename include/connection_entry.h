@@ -6,6 +6,9 @@ typedef struct connection_entry{
 	const char* state;
 	int ip_ver;
 
+	char* read_queue;
+	char* write_queue;
+
 	char* local_hostname;
 	char* local_addr;
 	char* local_service;

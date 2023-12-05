@@ -33,7 +33,10 @@ void print_conn_line(WINDOW* win, conn_entry* conn){
 	wprintw(win, "%s ", conn->state);
 
 	int y = getcury(win);
-	wmove(win, y, 18);
+	wmove(win, y, 20);
+
+	wprintw(win, "%s      ", conn->read_queue);
+	wprintw(win, "%s      ", conn->write_queue);
 
 	char* local_hostname_or_addr;
 	char* local_service_or_port;
@@ -91,7 +94,7 @@ void connections_window::draw(){
 
 	print_header(win, "Connections");
 
-	mvwprintw(win, 1, 1, "Netid State      Local Addr:Port      Rem Addr:Port");
+	mvwprintw(win, 1, 1, "Netid State        Recv-Q Send-Q Local Addr:Port      Rem Addr:Port");
 
 	std::vector<conn_entry*> connections = angel_pointer->get_connections();
 

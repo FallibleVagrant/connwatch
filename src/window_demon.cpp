@@ -17,18 +17,7 @@ int window_demon::start(model_angel* ap){
 	return 0;
 }
 
-window_demon::~window_demon(){
-	//Destructors are called regardless.
-	//info_win.~info_window();
-	//connect_win.~connections_window();
-	//action_win.~action_window();
-
-	/*Also unnecesary -- destructors are called.
-	for(connection_entry* entry : connections){
-		delete entry;
-	}
-	*/
-}
+window_demon::~window_demon(){}
 
 enum{
 	CONNS,

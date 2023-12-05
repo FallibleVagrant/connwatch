@@ -95,7 +95,7 @@ int model_angel::check_networking_agent(){
 		return -1;
 	}
 
-	for(unsigned int i = 0; i < num_messages; i++){
+	for(int i = 0; i < num_messages; i++){
 		if(messages[i].text != NULL){
 			dbgprint("[MODEL_ANGEL] Received a message! Text reads: %s\n", messages[i].text);
 		}

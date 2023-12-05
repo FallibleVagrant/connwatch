@@ -22,7 +22,8 @@ void dns_cache::insert(const unsigned int* addr, char* hostname){
 	memcpy(key.addr, addr, 4 * 8);
 	
 	//Check if the value to insert is already cached.
-	if(cache.contains(key)){
+	//Use count instead of contains because C++20 breaks designated initializers.
+	if(cache.count(key)){
 		struct dnsvalue value;
 		value = cache[key];
 
@@ -50,7 +51,8 @@ char* dns_cache::search(const unsigned int* addr){
 
 	memcpy(key.addr, addr, 4 * 8);
 
-	if(cache.contains(key)){
+	//Use count instead of contains because C++20 breaks designated initializers.
+	if(cache.count(key)){
 		struct dnsvalue value;
 		value = cache[key];
 

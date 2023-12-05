@@ -21,7 +21,7 @@ class connections_window : public abstract_window{
 	private:
 		WINDOW* win;
 		model_angel* angel_pointer;
-		int choice;
+		unsigned int choice;
 };
 
 #endif

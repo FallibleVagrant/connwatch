@@ -22,7 +22,7 @@ OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))
 UNAME_S := $(shell uname -s)
 
 CXXFLAGS = -I./include -g
-CXXFLAGS += -Wall -std=c++20
+CXXFLAGS += -Wall# -std=c++20 C++20 breaks designated initializers, so disable it!
 LIBS = -L./lib -lncurses
 
 CXXDEBUGFLAGS = -g

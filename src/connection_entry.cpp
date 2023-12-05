@@ -3,6 +3,9 @@
 #include <stdlib.h>
 
 void free_conn_entry(conn_entry* c){
+	free(c->read_queue);
+	free(c->write_queue);
+
 	free(c->local_hostname);
 	free(c->local_addr);
 	free(c->local_service);
