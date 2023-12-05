@@ -12,7 +12,7 @@ class addrkey{
 
 struct dnsvalue{
 	char* hostname;
-	time_t time_recorded;
+	time_t expiry;	//set an expiry instead of initial time, so we never have to check if the system clock was set backwards for some reason. Extremely defensive and pedantic, but whatever.
 };
 
 class dns_cache{

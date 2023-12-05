@@ -13,18 +13,26 @@ dns_cache::~dns_cache(){
 	//TODO: free the cache, I guess...
 }
 
+#include <time.h>
+#include "common.h"
+
 void dns_cache::insert(const unsigned int* addr, char* hostname){
 	addrkey key;
 
 	memcpy(key.addr, addr, 4 * 8);
 	
+	//Check if the value to insert is already cached.
 	if(cache.contains(key)){
 		struct dnsvalue value;
 		value = cache[key];
 
-		//TODO: check for expiry.
-		if(value.time_recorded){
+		if(time(0) < value.expiry){
+			//The same value is already cached, and isn't expired.
 			return;
+		}
+		else{
+			//It's cached, but expired. Free the value and insert with the updated hostname and new expiry.
+			free(&value);
 		}
 	}
 
@@ -33,8 +41,7 @@ void dns_cache::insert(const unsigned int* addr, char* hostname){
 	char* copy = (char*) calloc(1, strlen(hostname) + 1);
 	strcpy(copy, hostname);
 	value->hostname = copy;
-	//TODO: actually record the time.
-	value->time_recorded = 1;
+	value->expiry = time(0) + (ticker % 600) + 3600;
 	cache[key] = *value;
 }
 
@@ -47,8 +54,8 @@ char* dns_cache::search(const unsigned int* addr){
 		struct dnsvalue value;
 		value = cache[key];
 
-		//TODO: check for expiry.
-		if(value.time_recorded){
+		//Make sure it isn't expired.
+		if(time(0) < value.expiry){
 			char* hostname = cache[key].hostname;
 			char* r = (char*) calloc(1, strlen(hostname) + 1);
 			strcpy(r, hostname);
