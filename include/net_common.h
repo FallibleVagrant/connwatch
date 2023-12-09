@@ -5,6 +5,7 @@ enum{
 	INFO,
 	WARN,
 	ALERT,
+	REQ_IP,
 };
 
 extern const char* MSG_TYPES[];

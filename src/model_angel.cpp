@@ -70,8 +70,6 @@ int model_angel::get_num_alerts(){
 	return this->num_alerts;
 }
 
-#define MSG_BUFLEN 30
-
 void model_angel::add_message_to_log(int type, char* text){
 	message* p = (message*) calloc(1, sizeof(message));
 
@@ -82,20 +80,30 @@ void model_angel::add_message_to_log(int type, char* text){
 	message_log.insert(message_log.begin(), p);
 }
 
+#include <string.h>
+
 int model_angel::check_networking_agent(){
-	int r = net_agent.check_for_incoming_connections();
+	std::vector<char*> added_connection_msgs;
+	int r = net_agent.check_for_incoming_connections(added_connection_msgs);
 	if(r == -1){
 		return -1;
 	}
 
-	message messages[MSG_BUFLEN];
+	//Made a connection.
+	if(r > 0){
+		for(char* msg : added_connection_msgs){
+			this->add_message_to_log(INFO, msg);
+		}
+	}
 
-	int num_messages = net_agent.check_for_messages(messages, MSG_BUFLEN);
-	if(num_messages == -1){
+	std::vector<message> messages;
+
+	r = net_agent.check_for_messages(messages);
+	if(r == -1){
 		return -1;
 	}
 
-	for(int i = 0; i < num_messages; i++){
+	for(unsigned int i = 0; i < messages.size(); i++){
 		if(messages[i].text != NULL){
 			dbgprint("[MODEL_ANGEL] Received a message! Text reads: %s\n", messages[i].text);
 		}
@@ -111,6 +119,9 @@ int model_angel::check_networking_agent(){
 			case ALERT:
 				this->alert(messages[i].text);
 				this->add_message_to_log(ALERT, messages[i].text);
+				break;
+			case REQ_IP:
+				this->add_message_to_log(REQ_IP, NULL);
 				break;
 			default:
 				dbgprint("[MODEL_ANGEL] Message with unrecognised type somehow got through the filters!\n");
@@ -164,8 +175,16 @@ int model_angel::update(){
 
 		r = proc_read.fetch_connections(connections);
 		if(r == -1){
-			dbgprint("Could not fetch_connections() from system.\n");
+			dbgprint("[MODEL_ANGEL] Could not fetch_connections() from system.\n");
 			return -1;
+		}
+
+		if(ticker % 20 == 1){
+			r = net_agent.send_requested_ips(connections);
+			if(r == -1){
+				dbgprint("[MODEL_ANGEL] Could not send connection info to subscribed process(es)");
+				return -1;
+			}
 		}
 
 		this->sort_connections();
@@ -173,7 +192,7 @@ int model_angel::update(){
 
 	r = check_networking_agent();
 	if(r == -1){
-		dbgprint("Could not communicate with networking agent.\n");
+		dbgprint("[MODEL_ANGEL] Could not communicate with networking agent.\n");
 		return -1;
 	}
 

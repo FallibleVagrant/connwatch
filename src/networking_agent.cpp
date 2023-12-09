@@ -20,6 +20,7 @@ const char* MSG_TYPES[] = {
 	[INFO] = "INFO",
 	[WARN] = "WARN",
 	[ALERT] = "ALERT",
+	[REQ_IP] = "REQ_IP",
 };
 
 networking_agent::networking_agent(){}
@@ -100,8 +101,8 @@ int networking_agent::init(){
 }
 
 networking_agent::~networking_agent(){
-	for(int sock : clients){
-		close(sock);
+	for(struct client c : clients){
+		close(c.client_socket);
 	}
 
 	close(server_sock);
@@ -116,26 +117,38 @@ void* get_in_addr(struct sockaddr* sa){
 	return &(((struct sockaddr_in6*) sa)->sin6_addr);
 }
 
+#include <limits.h>
+
 int networking_agent::add_client(int client_socket){
 	dbgprint("[NET_AGENT] Adding client connection.\n");
 
 	//Set to non-blocking.
 	if(fcntl(client_socket, F_SETFL, O_NONBLOCK) == -1){
-		dbgprint("network_agent couldn't set connected socket to non-blocking for some reason.\n");
+		dbgprint("[NET_AGENT] Couldn't set connecting socket to non-blocking for some reason.\n");
 		return -1;
 	}
 
-	clients.push_back(client_socket);
+	struct client c = {seq_client_id, client_socket, false};
+	clients.push_back(c);
+
+	seq_client_id++;
+	if(seq_client_id >= ULLONG_MAX){
+		dbgprint("[NET_AGENT] Somehow, more than 2^64 - 1 clients connected to this process in its lifetime. Exiting...\n");
+		abort();
+	}
 
 	return 0;
 }
 
-void networking_agent::rem_client(int idx){
-	close(clients[idx]);
+void networking_agent::rem_client_by_index(int idx){
+	struct client client = clients[idx];
+
+	int client_socket = client.client_socket;
+	close(client_socket);
 	clients.erase(clients.begin() + idx);
 }
 
-int networking_agent::check_for_incoming_connections(){
+int networking_agent::check_for_incoming_connections(std::vector<char*>& added_connection_msgs){
 	int connected_socket;
 	struct sockaddr_storage rem_addr;
 	socklen_t sin_size = sizeof(rem_addr);
@@ -145,10 +158,10 @@ int networking_agent::check_for_incoming_connections(){
 		if(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR){
 			//Non-blocking and didn't find connection this time.
 			//We'll look for more connections to accept() next round.
-			return 1;
+			return 0;
 		}
 		else{
-			dbgprint("Something went wrong with accepting a connection!\n");
+			dbgprint("[NET_AGENT] Something went wrong with accepting a connection!\n");
 			return -1;
 		}
 	}
@@ -156,14 +169,19 @@ int networking_agent::check_for_incoming_connections(){
 	//Received a connection!
 	char addr_str[INET6_ADDRSTRLEN];
 	void* addr_bits = get_in_addr((struct sockaddr*) &rem_addr);
-	dbgprint("Received a connection from %s.\n", inet_ntop(rem_addr.ss_family, addr_bits, addr_str, sizeof(addr_str)));
+	dbgprint("[NET_AGENT] Connection received from %s.\n", inet_ntop(rem_addr.ss_family, addr_bits, addr_str, sizeof(addr_str)));
+
+	char* msg_str = (char*) calloc(128, sizeof(char));
+	strcpy(msg_str, "Connection received from ");
+	strcat(msg_str, addr_str);
+	added_connection_msgs.push_back(msg_str);
 
 	int r = add_client(connected_socket);
 	if(r == -1){
 		return -1;
 	}
 
-	return 0;
+	return 1;
 }
 
 #include "net_common.h"
@@ -172,28 +190,24 @@ int networking_agent::check_for_incoming_connections(){
 //INFO[ Message ]END
 //WARN[ Message ]END
 //ALERT[ Message ]END
+//REQ IP
 //
 //Where [ Message ] is a string of characters of any length, including zero.
 //TYPE and END are case-sensitive.
 //END must be included.
 //Bytes should not exceed 256, though for now that is not checked.
 //Subject to change to a more reasonable design, like having the length of the message in the header.
-int networking_agent::check_for_messages(message* message_array, unsigned int array_len){
+int networking_agent::check_for_messages(std::vector<message>& messages){
 	int num_bytes;
 	char buf[BUFLEN];
-
-	unsigned int midx = 0;
 
 	unsigned int outstanding_infos = 0;
 	unsigned int outstanding_warns = 0;
 	unsigned int outstanding_alerts = 0;
-
-	if(array_len == 0){
-		return -2;
-	}
+	unsigned int outstanding_reqs = 0;
 
 	for(unsigned int i = 0; i < clients.size(); i++){
-		int client_socket = clients[i];
+		int client_socket = clients[i].client_socket;
 		if((num_bytes = recv(client_socket, buf, BUFLEN, 0)) == -1){
 			//Clients are non-blocking -- continue to the next client.
 			if(errno == EAGAIN || errno == EWOULDBLOCK){
@@ -202,60 +216,51 @@ int networking_agent::check_for_messages(message* message_array, unsigned int ar
 
 			//If for any other reason the client is erroring out,
 			//just close the connection.
-			rem_client(i);
+			rem_client_by_index(i);
 			i--;
 			continue;
 		}
 
 		//Connection was closed.
 		if(num_bytes == 0){
-			rem_client(i);
+			rem_client_by_index(i);
 			i--;
 			continue;
 		}
 
+		buf[BUFLEN - 1] = '\0';
 		dbgprint("[NET_AGENT] Received some info! String is: %s\n", buf);
 
 		if(strncmp("INFO", buf, 4) == 0){
-			buf[BUFLEN - 1] = '\0';
 			char* p = strstr(buf, "END");
 			//No END in sight! Abandon this message; it is ill-formed.
 			if(p == NULL){
 				continue;
 			}
 
-			message_array[midx].type = INFO;
+			message msg;
+			msg.type = INFO;
 
 			//							v	includes the '\0'
 			char* new_text = (char*) calloc(p - buf, sizeof(char));
 			strncpy(new_text, buf + 4, p - buf - 4);
 
-			if(midx >= array_len){
-				//Trying to assign to a full array!
-				return -1;
-			}
-
 			if(p == buf + 4){
 				//There is no text between INFO and END.
-				message_array[midx].text = NULL;
+				msg.text = NULL;
 			}
 			else{
-				message_array[midx].text = new_text;
+				msg.text = new_text;
 			}
-			midx++;
+
+			messages.push_back(msg);
 
 			dbgprint("[NET_AGENT] Received an info signal!\n");
 			outstanding_infos++;
-
-			if(midx >= array_len){
-				//Reached limit; return early and leave potential messages in recv buffer.
-				break;
-			}
 		}
 
 		if(strncmp("WARN", buf, 4) == 0){
 			dbgprint("[NET_AGENT] Classed a WARN signal; checking...\n");
-			buf[BUFLEN - 1] = '\0';
 			char* p = strstr(buf, "END");
 			//No END in sight! Abandon this message; it is ill-formed.
 			if(p == NULL){
@@ -263,33 +268,25 @@ int networking_agent::check_for_messages(message* message_array, unsigned int ar
 				continue;
 			}
 
-			message_array[midx].type = WARN;
+			message msg;
+			msg.type = WARN;
 
 			//							v	includes the '\0'
 			char* new_text = (char*) calloc(p - buf, sizeof(char));
 			strncpy(new_text, buf + 4, p - buf - 4);
 
-			if(midx >= array_len){
-				//Trying to assign to a full array!
-				return -1;
-			}
-
 			if(p == buf + 4){
 				//There is no text between WARN and END.
-				message_array[midx].text = NULL;
+				msg.text = NULL;
 			}
 			else{
-				message_array[midx].text = new_text;
+				msg.text = new_text;
 			}
-			midx++;
+
+			messages.push_back(msg);
 
 			dbgprint("[NET_AGENT] Received a warn signal!\n");
 			outstanding_warns++;
-
-			if(midx >= array_len){
-				//Reached limit; return early and leave potential messages in recv buffer.
-				break;
-			}
 		}
 
 		if(strncmp("ALERT", buf, 5) == 0){
@@ -299,36 +296,79 @@ int networking_agent::check_for_messages(message* message_array, unsigned int ar
 				continue;
 			}
 
-			message_array[midx].type = ALERT;
+			message msg;
+			msg.type = ALERT;
 
 			//							v	includes the '\0'
 			char* new_text = (char*) calloc(p - buf, sizeof(char));
 			strncpy(new_text, buf + 5, p - buf - 5);
-dbgprint("[NET_AGENT] copied buf to new_text: %s\n", new_text);
-
-			if(midx >= array_len){
-				//Trying to assign to a full array!
-				return -1;
-			}
 
 			if(p == buf + 5){
 				//There is no text between ALERT and END.
-				message_array[midx].text = NULL;
+				msg.text = NULL;
 			}
 			else{
-				message_array[midx].text = new_text;
+				msg.text = new_text;
 			}
-			midx++;
+
+			messages.push_back(msg);
 
 			dbgprint("[NET_AGENT] Received an alert signal!\n");
 			outstanding_alerts++;
+		}
 
-			if(midx >= array_len){
-				//Reached limit; return early and leave potential messages in recv buffer.
-				break;
+		if(strncmp("REQ IP", buf, 6) == 0){
+			message msg;
+			msg.type = REQ_IP;
+			msg.text = NULL;
+
+			messages.push_back(msg);
+
+			dbgprint("[NET_AGENT] Received a request for IPs!\n");
+			outstanding_reqs++;
+		}
+	}
+
+	return outstanding_infos + outstanding_warns + outstanding_alerts + outstanding_reqs;
+}
+
+//Sends IP addresses to clients with has_requested_ips set to true.
+//
+//Sent in plaintext according to the following format:
+//A connection, with IP version ('4' or '6'), whitespace, followed by two IPs, separated by whitespace:
+//[4|6] [SRC] [DST]
+//
+//Subject to change, obviously. Since we're sending to localhost,
+//doing it this way doesn't introduce much in the way of delay.
+//And it is simpler to implement.
+//
+//But it would likely prove problematic if you start sending info across networks,
+//or if you start pushing through a lot of connections.
+int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
+	char buf[BUFLEN];
+
+	for(struct client client : clients){
+		if(client.has_requested_ips){
+			strcpy(buf, "START\n");
+			for(conn_entry* entry : connections){
+				if(entry->ip_ver == AF_INET){
+					strcat(buf, "4 ");
+				}
+				else{
+					strcat(buf, "6 ");
+				}
+				strcat(buf, entry->local_addr);
+				strcat(buf, " ");
+				strcat(buf, entry->rem_addr);
+				strcat(buf, "\n");
+
+				int num_bytes;
+				if((num_bytes = send(server_sock, buf, strlen(buf), 0)) == -1){
+					return -1;
+				}
 			}
 		}
 	}
 
-	return outstanding_infos + outstanding_warns + outstanding_alerts;
+	return 0;
 }

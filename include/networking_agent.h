@@ -5,6 +5,13 @@
 
 #include <vector>
 #include "net_common.h"
+#include "connection_entry.h"
+
+struct client{
+	unsigned long long client_id;
+	int client_socket;
+	bool has_requested_ips;
+};
 
 class networking_agent{
 	public:
@@ -12,16 +19,18 @@ class networking_agent{
 		~networking_agent();
 
 		int init();
-		int check_for_incoming_connections();
-		int check_for_messages(message* message_array, unsigned int array_len);
+		int check_for_incoming_connections(std::vector<char*>& added_connection_msgs);
+		int check_for_messages(std::vector<message>& messages);
 		void reset_outstanding_warnings();
+		int send_requested_ips(std::vector<conn_entry*>& connections);
 	private:
 		int server_sock;
-		std::vector<int> clients;
+		unsigned long long seq_client_id;
+		std::vector<struct client> clients;
 
 		int init_socket();
 		int add_client(int fd);
-		void rem_client(int idx);
+		void rem_client_by_index(int idx);
 };
 
 #endif
