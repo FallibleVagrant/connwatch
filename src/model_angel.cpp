@@ -166,7 +166,9 @@ void model_angel::sort_connections(){
 
 int model_angel::update(){
 	int r;
-	if(ticker % 2 == 1){
+	if(time(NULL) > time_since_last_connection_update + time_between_connection_updates
+			|| time_since_last_connection_update == 0){
+		time_since_last_connection_update = time(NULL);
 		//Deallocate and clear.
 		for(conn_entry* entry : connections){
 			free_conn_entry(entry);
@@ -181,7 +183,8 @@ int model_angel::update(){
 			return -1;
 		}
 
-		if(1){
+		if(time(NULL) > time_since_last_ip_reqs_update + time_between_ip_reqs_updates){
+			time_since_last_ip_reqs_update = time(NULL);
 			dbgprint("[MODEL_ANGEL] send_requested_ips()...\n");
 			r = net_agent.send_requested_ips(connections);
 			if(r == -1){

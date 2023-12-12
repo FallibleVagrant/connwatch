@@ -16,4 +16,12 @@ typedef struct message{
 	char* text;
 } message;
 
+#include <time.h>
+
+extern time_t time_since_last_connection_update;
+extern unsigned int time_between_connection_updates;
+
+extern time_t time_since_last_ip_reqs_update;
+extern unsigned int time_between_ip_reqs_updates;
+
 #endif

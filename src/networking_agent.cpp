@@ -359,23 +359,23 @@ int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
 				strcat(buf, " ");
 				strcat(buf, entry->rem_addr);
 				strcat(buf, "\n");
+			}
 
-				dbgprint("[NET_AGENT] Sending string: %s.\n", buf);
+			dbgprint("[NET_AGENT] Sending string: %s.\n", buf);
 
-				int num_bytes;
-				if((num_bytes = send(client.client_socket, buf, strlen(buf), 0)) == -1){
-					//Clients are non-blocking -- continue to the next client.
-					if(errno == EAGAIN || errno == EWOULDBLOCK){
-						break;
-					}
-
-					dbgprint("[NET_AGENT] Failed to send IPs to client, closing connection.\n");
-					//If for any other reason the client is erroring out,
-					//just close the connection.
-					rem_client_by_index(i);
-					i--;
+			int num_bytes;
+			if((num_bytes = send(client.client_socket, buf, strlen(buf), 0)) == -1){
+				//Clients are non-blocking -- continue to the next client.
+				if(errno == EAGAIN || errno == EWOULDBLOCK){
 					break;
 				}
+
+				dbgprint("[NET_AGENT] Failed to send IPs to client, closing connection.\n");
+				//If for any other reason the client is erroring out,
+				//just close the connection.
+				rem_client_by_index(i);
+				i--;
+				break;
 			}
 		}
 	}
