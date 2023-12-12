@@ -16,13 +16,6 @@
 
 #include "debug.h"
 
-const char* MSG_TYPES[] = {
-	[INFO] = "INFO",
-	[WARN] = "WARN",
-	[ALERT] = "ALERT",
-	[REQ_IP] = "REQ_IP",
-};
-
 networking_agent::networking_agent(){}
 
 #define DEFAULT_PORT "40344"
