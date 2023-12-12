@@ -144,8 +144,6 @@ enum{
 int proc_reader::open_generic_proc(FILE* fp, int AF, int netid){
 	char line[256];
 
-	dbgprint("[PROC_READER] Reading a /proc file...\n");
-
 	//Skip header in /proc/whatever.
 	if(fgets(line, sizeof(line), fp) == NULL){
 		dbgprint("[PROC_READER] Could not read header of a /proc file.\n");
@@ -751,7 +749,6 @@ int proc_reader::fetch_tcp_data(){
 	//Code stolen from ss.c
 	//
 	//"Sigh... We have to parse /proc/net/tcp..."
-	dbgprint("Fetching tcp data from /proc/net/tcp...\n");
 
 	FILE* fp = NULL;
 	char* buf = NULL;
@@ -964,8 +961,6 @@ int proc_reader::udp_parse_proc_line(char* line, int AF){
 }
 
 int proc_reader::fetch_udp_data(){
-	dbgprint("Fetching udp data from /proc/net/udp...\n");
-
 	FILE *fp = NULL;
 
 	/*if(!getenv("PROC_NET_UDP") && !getenv("PROC_ROOT")

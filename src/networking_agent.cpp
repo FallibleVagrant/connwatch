@@ -35,9 +35,9 @@ int networking_agent::init_socket(){
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_STREAM;
 
-	//Use the loopback address because node is NULL and AF_PASSIVE isn't specified.
+	//Use the loopback address because node is NULL and AI_PASSIVE isn't specified.
 	//Cf. man page of getaddrinfo().
-	//hints.ai_flags = AF_PASSIVE;
+	//hints.ai_flags = AI_PASSIVE;
 	
 	const char* port = DEFAULT_PORT;
 	
@@ -165,7 +165,7 @@ int networking_agent::check_for_incoming_connections(std::vector<char*>& added_c
 			return -1;
 		}
 	}
-	
+
 	//Received a connection!
 	char addr_str[INET6_ADDRSTRLEN];
 	void* addr_bits = get_in_addr((struct sockaddr*) &rem_addr);
@@ -326,6 +326,8 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 
 			dbgprint("[NET_AGENT] Received a request for IPs!\n");
 			outstanding_reqs++;
+
+			clients[i].has_requested_ips = true;
 		}
 	}
 
@@ -347,8 +349,11 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
 	char buf[BUFLEN];
 
-	for(struct client client : clients){
+	for(unsigned int i = 0; i < clients.size(); i++){
+		struct client client = clients[i];
+
 		if(client.has_requested_ips){
+			dbgprint("[NET_AGENT] Sending IPs to client %u.\n", i);
 			strcpy(buf, "START\n");
 			for(conn_entry* entry : connections){
 				if(entry->ip_ver == AF_INET){
@@ -362,9 +367,21 @@ int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
 				strcat(buf, entry->rem_addr);
 				strcat(buf, "\n");
 
+				dbgprint("[NET_AGENT] Sending string: %s.\n", buf);
+
 				int num_bytes;
-				if((num_bytes = send(server_sock, buf, strlen(buf), 0)) == -1){
-					return -1;
+				if((num_bytes = send(client.client_socket, buf, strlen(buf), 0)) == -1){
+					//Clients are non-blocking -- continue to the next client.
+					if(errno == EAGAIN || errno == EWOULDBLOCK){
+						break;
+					}
+
+					dbgprint("[NET_AGENT] Failed to send IPs to client, closing connection.\n");
+					//If for any other reason the client is erroring out,
+					//just close the connection.
+					rem_client_by_index(i);
+					i--;
+					break;
 				}
 			}
 		}

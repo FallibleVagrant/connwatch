@@ -36,13 +36,13 @@ int controller_god::update(){
 
 	int r = angel.update();
 	if(r == -1){
-		fprintf(stderr, "model_angel reported back error.\n");
+		dbgprint("[CONTROLLER_GOD] model_angel reported back error.\n");
 		return -1;
 	}
 
 	r = demon.update();
 	if(r == -1){
-		fprintf(stderr, "window_demon reported back error.\n");
+		dbgprint("[CONTROLLER_GOD] window_demon reported back error.\n");
 		return -1;
 	}
 

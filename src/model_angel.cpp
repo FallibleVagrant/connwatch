@@ -173,13 +173,16 @@ int model_angel::update(){
 		}
 		connections.clear();
 
+		dbgprint("[MODEL_ANGEL] fetch_connections()...\n");
+
 		r = proc_read.fetch_connections(connections);
 		if(r == -1){
 			dbgprint("[MODEL_ANGEL] Could not fetch_connections() from system.\n");
 			return -1;
 		}
 
-		if(ticker % 20 == 1){
+		if(1){
+			dbgprint("[MODEL_ANGEL] send_requested_ips()...\n");
 			r = net_agent.send_requested_ips(connections);
 			if(r == -1){
 				dbgprint("[MODEL_ANGEL] Could not send connection info to subscribed process(es)");
@@ -190,6 +193,7 @@ int model_angel::update(){
 		this->sort_connections();
 	}
 
+	dbgprint("[MODEL_ANGEL] check_networking_agent()...\n");
 	r = check_networking_agent();
 	if(r == -1){
 		dbgprint("[MODEL_ANGEL] Could not communicate with networking agent.\n");
