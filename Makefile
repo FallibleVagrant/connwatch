@@ -17,7 +17,7 @@
 EXE = connwatch
 SRC_DIR = ./src
 OBJ_DIR = ./obj
-SOURCES += $(SRC_DIR)/main.cpp $(SRC_DIR)/info_window.cpp $(SRC_DIR)/connections_window.cpp $(SRC_DIR)/action_window.cpp $(SRC_DIR)/window_demon.cpp $(SRC_DIR)/ncurses_funcs.cpp $(SRC_DIR)/controller_god.cpp $(SRC_DIR)/model_angel.cpp $(SRC_DIR)/config_bar.cpp $(SRC_DIR)/warn_window.cpp $(SRC_DIR)/text_animations.cpp $(SRC_DIR)/alarum_window.cpp $(SRC_DIR)/networking_agent.cpp $(SRC_DIR)/scrolling_machine.cpp $(SRC_DIR)/main_window_header.cpp $(SRC_DIR)/log_window.cpp $(SRC_DIR)/connection_entry.cpp $(SRC_DIR)/options.cpp $(SRC_DIR)/proc_reader.cpp $(SRC_DIR)/dns_cache.cpp
+SOURCES += $(SRC_DIR)/main.cpp $(SRC_DIR)/info_window.cpp $(SRC_DIR)/connections_window.cpp $(SRC_DIR)/action_window.cpp $(SRC_DIR)/window_demon.cpp $(SRC_DIR)/ncurses_funcs.cpp $(SRC_DIR)/controller_god.cpp $(SRC_DIR)/model_angel.cpp $(SRC_DIR)/config_bar.cpp $(SRC_DIR)/warn_window.cpp $(SRC_DIR)/text_animations.cpp $(SRC_DIR)/alarum_window.cpp $(SRC_DIR)/networking_agent.cpp $(SRC_DIR)/scrolling_machine.cpp $(SRC_DIR)/main_window_header.cpp $(SRC_DIR)/log_window.cpp $(SRC_DIR)/connection_entry.cpp $(SRC_DIR)/options.cpp $(SRC_DIR)/proc_reader.cpp $(SRC_DIR)/dns_cache.cpp $(SRC_DIR)/common.cpp
 OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES)))))
 UNAME_S := $(shell uname -s)
 

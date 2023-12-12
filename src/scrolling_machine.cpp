@@ -22,11 +22,11 @@ The point is to derive everything from this->choice, to avoid state and also bec
 void compute_range_of_page(
 		const unsigned int MAX_ITEMS_PER_PAGE,
 		const unsigned int num_entries,
-		const int choice,
+		const unsigned int choice,
 		int* shown_page,
 		int* num_view_pages,
-		int* max_items_on_shown_page,
-		int* starting_entry_on_shown_page,
+		unsigned int* max_items_on_shown_page,
+		unsigned int* starting_entry_on_shown_page,
 		int* shown_window_choice){
 
 	*shown_page = 0;
@@ -86,7 +86,7 @@ void compute_range_of_page(
 				*max_items_on_shown_page = MAX_ITEMS_PER_PAGE - 1;
 			}
 			else{
-				int num_items_before_last_page = (MAX_ITEMS_PER_PAGE - 1) + (num_middle_pages * (MAX_ITEMS_PER_PAGE - 2));
+				unsigned int num_items_before_last_page = (MAX_ITEMS_PER_PAGE - 1) + (num_middle_pages * (MAX_ITEMS_PER_PAGE - 2));
 
 				//Past the first view_page, but not on the last.
 				//(choice > MAX_ITEMS_PER_PAGE - 1)

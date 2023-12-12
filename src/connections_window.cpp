@@ -112,8 +112,8 @@ void connections_window::draw(){
 
 	int shown_page;
 	int num_view_pages;
-	int max_items_on_shown_page;
-	int starting_entry;
+	unsigned int max_items_on_shown_page;
+	unsigned int starting_entry;
 	int shown_window_choice;
 
 	compute_range_of_page(CONN_WIN_HEIGHT - 3, connections.size(), choice, &shown_page, &num_view_pages, &max_items_on_shown_page, &starting_entry, &shown_window_choice);
@@ -136,7 +136,7 @@ void connections_window::draw(){
 	mvwprintw(win, 1, CONN_WIN_WIDTH - len - 2, "%d / %d", shown_page, num_view_pages - 1);
 
 	int y_offset = 0;
-	for(int i = starting_entry; i < max_items_on_shown_page + starting_entry; i++){
+	for(unsigned int i = starting_entry; i < max_items_on_shown_page + starting_entry; i++){
 		if(i >= connections.size()){
 			break;
 		}

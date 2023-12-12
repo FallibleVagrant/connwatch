@@ -72,7 +72,7 @@ int get_slabstat(struct slabstat* s){
 
 	fgets(buf, sizeof(buf), fp);
 	while(fgets(buf, sizeof(buf), fp) != NULL){
-		for(int i = 0; i < sizeof(slabstat_ids[i]) / sizeof(slabstat_ids[0]); i++){
+		for(unsigned int i = 0; i < sizeof(slabstat_ids[i]) / sizeof(slabstat_ids[0]); i++){
 			if(memcmp(buf, slabstat_ids[i], strlen(slabstat_ids[i])) == 0){
 				sscanf(buf, "%*s%d", ((int *)s) + i);
 

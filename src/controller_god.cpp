@@ -7,8 +7,6 @@
 
 #include "common.h"
 
-unsigned int ticker = 761283810;
-
 controller_god::controller_god() : demon(), angel(){}
 
 #include "debug.h"
