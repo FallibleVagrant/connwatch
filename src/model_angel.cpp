@@ -184,17 +184,17 @@ int model_angel::update(){
 			return -1;
 		}
 
-		if(time(NULL) > time_since_last_ip_reqs_update + time_between_ip_reqs_updates){
-			time_since_last_ip_reqs_update = time(NULL);
-			dbgprint("[MODEL_ANGEL] send_requested_ips()...\n");
-			r = net_agent.send_requested_ips(connections);
-			if(r == -1){
-				dbgprint("[MODEL_ANGEL] Could not send connection info to subscribed process(es)");
-				return -1;
-			}
-		}
-
 		this->sort_connections();
+	}
+
+	if(time(NULL) > time_since_last_ip_reqs_update + time_between_ip_reqs_updates){
+		time_since_last_ip_reqs_update = time(NULL);
+		dbgprint("[MODEL_ANGEL] send_requested_ips()...\n");
+		r = net_agent.send_requested_ips(connections);
+		if(r == -1){
+			dbgprint("[MODEL_ANGEL] Could not send connection info to subscribed process(es)");
+			return -1;
+		}
 	}
 
 	dbgprint("[MODEL_ANGEL] check_networking_agent()...\n");
