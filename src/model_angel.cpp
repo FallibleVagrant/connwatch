@@ -3,6 +3,7 @@
 #include "debug.h"
 #include "window_demon.h"
 #include "net_common.h"
+#include "common.h"
 
 model_angel::model_angel(){
 	num_warnings = 0;
@@ -71,7 +72,7 @@ int model_angel::get_num_alerts(){
 }
 
 void model_angel::add_message_to_log(int type, char* text){
-	message* p = (message*) calloc(1, sizeof(message));
+	message* p = (message*) kalloc(1, sizeof(message));
 
 	p->type = type;
 	//This was already allocated on the heap by the networking agent.

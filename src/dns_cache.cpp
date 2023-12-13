@@ -38,8 +38,8 @@ void dns_cache::insert(const unsigned int* addr, char* hostname){
 	}
 
 	//Do the insert proper.
-	struct dnsvalue* value = (struct dnsvalue*) calloc(1, sizeof(struct dnsvalue));
-	char* copy = (char*) calloc(1, strlen(hostname) + 1);
+	struct dnsvalue* value = (struct dnsvalue*) kalloc(1, sizeof(struct dnsvalue));
+	char* copy = (char*) kalloc(1, strlen(hostname) + 1);
 	strcpy(copy, hostname);
 	value->hostname = copy;
 	value->expiry = time(0) + (ticker % 600) + 3600;
@@ -59,7 +59,7 @@ char* dns_cache::search(const unsigned int* addr){
 		//Make sure it isn't expired.
 		if(time(0) < value.expiry){
 			char* hostname = cache[key].hostname;
-			char* r = (char*) calloc(1, strlen(hostname) + 1);
+			char* r = (char*) kalloc(1, strlen(hostname) + 1);
 			strcpy(r, hostname);
 			return r;
 		}

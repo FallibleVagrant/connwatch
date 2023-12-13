@@ -15,6 +15,7 @@
 #include <stdlib.h>
 
 #include "debug.h"
+#include "common.h"
 
 networking_agent::networking_agent(){}
 
@@ -164,7 +165,7 @@ int networking_agent::check_for_incoming_connections(std::vector<char*>& added_c
 	void* addr_bits = get_in_addr((struct sockaddr*) &rem_addr);
 	dbgprint("[NET_AGENT] Connection received from %s.\n", inet_ntop(rem_addr.ss_family, addr_bits, addr_str, sizeof(addr_str)));
 
-	char* msg_str = (char*) calloc(128, sizeof(char));
+	char* msg_str = (char*) kalloc(128, sizeof(char));
 	strcpy(msg_str, "Connection received from ");
 	strcat(msg_str, addr_str);
 	added_connection_msgs.push_back(msg_str);
@@ -173,6 +174,10 @@ int networking_agent::check_for_incoming_connections(std::vector<char*>& added_c
 	if(r == -1){
 		return -1;
 	}
+
+	//Send IPs to subscribed processes, as there is a new subscribed process.
+	//TODO: Make this individualized?
+	time_since_last_ip_reqs_update = 0;
 
 	return 1;
 }
@@ -235,7 +240,7 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 			msg.type = INFO;
 
 			//							v	includes the '\0'
-			char* new_text = (char*) calloc(p - buf, sizeof(char));
+			char* new_text = (char*) kalloc(p - buf, sizeof(char));
 			strncpy(new_text, buf + 4, p - buf - 4);
 
 			if(p == buf + 4){
@@ -265,7 +270,7 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 			msg.type = WARN;
 
 			//							v	includes the '\0'
-			char* new_text = (char*) calloc(p - buf, sizeof(char));
+			char* new_text = (char*) kalloc(p - buf, sizeof(char));
 			strncpy(new_text, buf + 4, p - buf - 4);
 
 			if(p == buf + 4){
@@ -293,7 +298,7 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 			msg.type = ALERT;
 
 			//							v	includes the '\0'
-			char* new_text = (char*) calloc(p - buf, sizeof(char));
+			char* new_text = (char*) kalloc(p - buf, sizeof(char));
 			strncpy(new_text, buf + 5, p - buf - 5);
 
 			if(p == buf + 5){
@@ -340,7 +345,8 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 //But it would likely prove problematic if you start sending info across networks,
 //or if you start pushing through a lot of connections.
 int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
-	char buf[BUFLEN];
+	char* buf = (char*) kalloc(BUFLEN, sizeof(char));
+	unsigned int multiplier = 1;
 
 	for(unsigned int i = 0; i < clients.size(); i++){
 		struct client client = clients[i];
@@ -348,25 +354,33 @@ int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
 		if(client.has_requested_ips){
 			dbgprint("[NET_AGENT] Sending IPs to client %u.\n", i);
 			strcpy(buf, "START\n");
+
 			for(conn_entry* entry : connections){
+				if(strlen(buf) > (multiplier * BUFLEN) - (3 * INET6_ADDRSTRLEN)){
+					multiplier++;
+					char* newbuf = (char*) kalloc(BUFLEN * multiplier, sizeof(char));
+					strcpy(newbuf, buf);
+					free(buf);
+					buf = newbuf;
+				}
 				if(entry->ip_ver == AF_INET){
 					strcat(buf, "4 ");
 				}
 				else{
 					strcat(buf, "6 ");
 				}
+
 				strcat(buf, entry->local_addr);
 				strcat(buf, " ");
+
 				strcat(buf, entry->rem_addr);
 				strcat(buf, "\n");
 			}
 
-			dbgprint("[NET_AGENT] Sending string: %s.\n", buf);
-
-			int num_bytes;
-			if((num_bytes = send(client.client_socket, buf, strlen(buf), 0)) == -1){
+			if(send(client.client_socket, buf, strlen(buf), 0) == -1){
 				//Clients are non-blocking -- continue to the next client.
 				if(errno == EAGAIN || errno == EWOULDBLOCK){
+					dbgprint("[NET_AGENT] Could not send() to client without blocking; skipping...\n");
 					break;
 				}
 
@@ -379,6 +393,8 @@ int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
 			}
 		}
 	}
+
+	free(buf);
 
 	return 0;
 }

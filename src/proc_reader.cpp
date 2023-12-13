@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 
 #include "debug.h"
+#include "common.h"
 
 proc_reader::proc_reader(){}
 
@@ -237,7 +238,7 @@ struct sockaddr* inet_prefix_to_sockaddr(const inet_prefix* addr, unsigned int* 
 
 	//IPv4
 	if(addr->family == AF_INET){
-		sin = (struct sockaddr_in*) calloc(1, sizeof(struct sockaddr_in));
+		sin = (struct sockaddr_in*) kalloc(1, sizeof(struct sockaddr_in));
 
 		sin->sin_family = AF_INET;
 		sin->sin_port = htons(port);
@@ -249,7 +250,7 @@ struct sockaddr* inet_prefix_to_sockaddr(const inet_prefix* addr, unsigned int* 
 	}
 	//IPv6
 	else{
-		sin6 = (struct sockaddr_in6*) calloc(1, sizeof(struct sockaddr_in6));
+		sin6 = (struct sockaddr_in6*) kalloc(1, sizeof(struct sockaddr_in6));
 
 		sin6->sin6_family = addr->family;
 		sin6->sin6_port = htons(port);
@@ -268,7 +269,7 @@ struct sockaddr* inet_prefix_to_sockaddr(const inet_prefix* addr, unsigned int* 
 
 char* resolve_service(inet_prefix* addr, int port){
 	unsigned int buflen = 128;
-	char* buf = (char*) calloc(buflen, sizeof(char));
+	char* buf = (char*) kalloc(buflen, sizeof(char));
 
 	if(port == 0){
 		free(buf);
@@ -301,7 +302,7 @@ char* proc_reader::resolve_hostname(const inet_prefix* addr, int port){
 	}
 
 	unsigned int buflen = 128;
-	char* buf = (char*) calloc(buflen, sizeof(char));
+	char* buf = (char*) kalloc(buflen, sizeof(char));
 
 	unsigned int addrlen;
 	struct sockaddr* sa = inet_prefix_to_sockaddr(addr, &addrlen, port);
@@ -538,7 +539,7 @@ next:
 }
 
 char* port_to_string(int port){
-	char* buf = (char*) calloc(64, sizeof(char));
+	char* buf = (char*) kalloc(64, sizeof(char));
 
 	if(port == 0){
 		buf[0] = '*';
@@ -694,7 +695,7 @@ int proc_reader::tcp_parse_proc_line(char* line, int AF){
 	fprintf(stderr, "\n");*/
 
 	//Load info into conn_entry.
-	conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
+	conn_entry* entry = (conn_entry*) kalloc(1, sizeof(conn_entry));
 
 	entry->netid = "TCP";
 	entry->state = sstate_name[s.state];
@@ -703,10 +704,10 @@ int proc_reader::tcp_parse_proc_line(char* line, int AF){
 	entry->ip_ver = s.local.family;
 
 	unsigned int buflen = 128;
-	char* buf = (char*) calloc(buflen, sizeof(char));
+	char* buf = (char*) kalloc(buflen, sizeof(char));
 	snprintf(buf, buflen, "%d", s.rq);
 	entry->read_queue = buf;
-	buf = (char*) calloc(buflen, sizeof(char));
+	buf = (char*) kalloc(buflen, sizeof(char));
 	snprintf(buf, buflen, "%d", s.wq);
 	entry->write_queue = buf;
 
@@ -715,8 +716,8 @@ int proc_reader::tcp_parse_proc_line(char* line, int AF){
 		entry->local_hostname = resolve_hostname(&s.local, s.local_port);
 	}
 
-	buflen = 128;
-	buf = (char*) calloc(buflen, sizeof(char));
+	buflen = INET6_ADDRSTRLEN;
+	buf = (char*) kalloc(buflen, sizeof(char));
 	inet_ntop(s.local.family, s.local.data, buf, buflen);
 	entry->local_addr = buf;
 
@@ -730,7 +731,7 @@ int proc_reader::tcp_parse_proc_line(char* line, int AF){
 		entry->rem_hostname = resolve_hostname(&s.remote, s.remote_port);
 	}
 
-	buf = (char*) calloc(buflen, sizeof(char));
+	buf = (char*) kalloc(buflen, sizeof(char));
 	inet_ntop(s.remote.family, s.remote.data, buf, buflen);
 	entry->rem_addr = buf;
 
@@ -910,7 +911,7 @@ int proc_reader::udp_parse_proc_line(char* line, int AF){
 	*/
 
 	//Load info into conn_entry.
-	conn_entry* entry = (conn_entry*) calloc(1, sizeof(conn_entry));
+	conn_entry* entry = (conn_entry*) kalloc(1, sizeof(conn_entry));
 
 	entry->netid = "UDP";
 	entry->state = sstate_name[s.state];
@@ -919,10 +920,10 @@ int proc_reader::udp_parse_proc_line(char* line, int AF){
 	entry->ip_ver = s.local.family;
 
 	unsigned int buflen = 128;
-	char* buf = (char*) calloc(buflen, sizeof(char));
+	char* buf = (char*) kalloc(buflen, sizeof(char));
 	snprintf(buf, buflen, "%d", s.rq);
 	entry->read_queue = buf;
-	buf = (char*) calloc(buflen, sizeof(char));
+	buf = (char*) kalloc(buflen, sizeof(char));
 	snprintf(buf, buflen, "%d", s.wq);
 	entry->write_queue = buf;
 
@@ -931,8 +932,8 @@ int proc_reader::udp_parse_proc_line(char* line, int AF){
 		entry->local_hostname = resolve_hostname(&s.local, s.local_port);
 	}
 
-	buflen = 128;
-	buf = (char*) calloc(buflen, sizeof(char));
+	buflen = INET6_ADDRSTRLEN;
+	buf = (char*) kalloc(buflen, sizeof(char));
 	inet_ntop(s.local.family, s.local.data, buf, buflen);
 	entry->local_addr = buf;
 
@@ -946,7 +947,7 @@ int proc_reader::udp_parse_proc_line(char* line, int AF){
 		entry->rem_hostname = resolve_hostname(&s.remote, s.remote_port);
 	}
 
-	buf = (char*) calloc(buflen, sizeof(char));
+	buf = (char*) kalloc(buflen, sizeof(char));
 	inet_ntop(s.remote.family, s.remote.data, buf, buflen);
 	entry->rem_addr = buf;
 

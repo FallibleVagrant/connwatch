@@ -12,6 +12,7 @@
 #include "debug.h"
 
 FILE* debug_log;
+FILE* error_log;
 
 //using std::string;
 
@@ -33,7 +34,7 @@ void init_curses(){
 		init_color(COLOR_RED, 700, 0, 0);
 
 		init_color(COLOR_MAGENTA, 600, 100, 100);
-		init_color(COLOR_YELLOW, 957, 514, 145);
+		init_color(COLOR_YELLOW, 957, 514, 145);		//Also try #FF9F43
 	}
 
 	init_pair(RED_AND_BLACK, COLOR_RED, COLOR_BLACK);
@@ -119,6 +120,11 @@ int main(int argc, char* argv[]){
 			fprintf(stderr, "Could not open debug.log...\nExiting...\n");
 			return -1;
 		}
+	}
+	error_log = fopen("error.log", "w");
+	if(!error_log){
+		fprintf(stderr, "Could not open error.log...\nExiting...\n");
+		return -1;
 	}
 	dbgprint("Initializing curses...\n");
 

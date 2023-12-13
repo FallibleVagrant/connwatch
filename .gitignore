@@ -3,3 +3,4 @@ ss_src/
 netstat_src/
 connwatch
 debug.log
+error.log
