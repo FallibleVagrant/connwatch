@@ -55,7 +55,7 @@ int networking_agent::init_socket(){
 
 		//Set to non-blocking.
 		if(fcntl(server_sock, F_SETFL, O_NONBLOCK) == -1){
-			dbgprint("network_agent couldn't set socket to non-blocking for some reason.\n");
+			dbgprint("[NET_AGENT] Couldn't set socket to non-blocking for some reason.\n");
 			return -1;
 		}
 
@@ -68,7 +68,7 @@ int networking_agent::init_socket(){
 	}
 
 	if(p == NULL){
-		dbgprint("network_agent failed to bind a socket.\n");
+		dbgprint("[NET_AGENT] Failed to bind a socket.\n");
 		return -1;
 	}
 
@@ -315,21 +315,128 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 			outstanding_alerts++;
 		}
 
-		if(strncmp("REQ IP", buf, 6) == 0){
+		//Drop any requests for non-localhost at the moment,
+		//because doing otherwise could be a security weakness.
+		//Remote stuff is NOT supported at the moment,
+		//as it requires a bit more forethought.
+		//In fact:
+		//TODO: change this if we ever support remote stuff.
+		//
+		//Format of this is:
+		//REQ IP [IP] [PORT]
+		//See connect_to_requested_ips_listening_place for explanation,
+		//because it needs one.
+		if(strncmp("REQ IP localhost", buf, 16) == 0){
 			message msg;
 			msg.type = REQ_IP;
-			msg.text = NULL;
+
+			char ip_str[BUFLEN];
+			char port_str[BUFLEN];
+			sscanf(buf, "REQ IP %s %s", ip_str, port_str);
+
+			//Fantastic name, I know.
+			int r = connect_to_requested_ips_listening_place(ip_str, port_str);
+			if(r == -1){
+				dbgprint("[NET_AGENT] Received a request for IPs, but server to connect to rejected us!\n");
+				continue;
+			}
+
+			char* new_text = (char*) kalloc(BUFLEN, sizeof(char));
+			snprintf(new_text, BUFLEN, "Connected to %s:%s to serve IPs.", ip_str, port_str);
+			msg.text = new_text;
+			dbgprint("new_text reads: %s\n", new_text);
 
 			messages.push_back(msg);
 
 			dbgprint("[NET_AGENT] Received a request for IPs!\n");
 			outstanding_reqs++;
-
-			clients[i].has_requested_ips = true;
 		}
 	}
 
 	return outstanding_infos + outstanding_warns + outstanding_alerts + outstanding_reqs;
+}
+
+//Fantastic name, I know.
+//Upon a REQ IP from an already-established client,
+//(Format is:
+//REQ IP [IP] [PORT]
+//)
+//networking_agent will attempt to connect() to the ip:port combo
+//and add it as a client that has_requested_ips.
+int networking_agent::connect_to_requested_ips_listening_place(const char* ips_str, const char* port_str){
+	int client_sock;
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_STREAM;
+
+	//Use the loopback address because node is NULL and AI_PASSIVE isn't specified.
+	//Cf. man page of getaddrinfo().
+	//hints.ai_flags = AI_PASSIVE;
+	
+	const char* port = port_str;
+	
+	struct addrinfo* servinfo;
+	struct addrinfo* p;
+	int r;
+	if((r = getaddrinfo(NULL, port, &hints, &servinfo)) != 0){
+		dbgprint("[NET_AGENT] getaddrinfo() returned err: %s\n", gai_strerror(r));
+		return -1;
+	}
+
+	//Loop through all the results and connect to the first we can.
+	for(p = servinfo; p != NULL; p = p->ai_next){
+		if((client_sock = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1){
+			dbgprint("[DEBUG] Couldn't get a socket for some reason.\n");
+			continue;
+		}
+
+		/*Slightly dead code, but leave it here please.
+		//Set to non-blocking.
+		if(fcntl(client_sock, F_SETFL, O_NONBLOCK) == -1){
+			dbgprint("[NET_RECEIVER] couldn't set socket to non-blocking for some reason.\n");
+			return -1;
+		}
+		*/
+
+		if(connect(client_sock, p->ai_addr, p->ai_addrlen) == -1){
+			dbgprint("[NET_AGENT] Couldn't connect() for some reason.\n");
+			close(client_sock);
+			continue;
+		}
+
+		break;
+	}
+
+	if(p == NULL){
+		dbgprint("[NET_AGENT] Failed to connect.\n");
+		return -1;
+	}
+
+	//Set to non-blocking.
+	/*Done in add_client().
+	if(fcntl(client_sock, F_SETFL, O_NONBLOCK) == -1){
+		dbgprint("[NET_AGENT] couldn't set socket to non-blocking for some reason.\n");
+		close(client_sock);
+		return -1;
+	}
+	*/
+
+	dbgprint("Selected ai_family: %d\nSelected ai_socktype: %d\nSelected ai_protocol: %d\n", p->ai_family, p->ai_socktype, p->ai_protocol);
+	char s[INET6_ADDRSTRLEN];
+	inet_ntop(p->ai_family, get_in_addr((struct sockaddr*)p->ai_addr), s, sizeof(s));
+	dbgprint("Connected to: %s", s);
+
+	freeaddrinfo(servinfo);
+
+	//Add this new connection to our clients and set has_requested_ips to true.
+	r = add_client(client_sock);
+	if(r == -1){
+		return -1;
+	}
+	clients[clients.size() - 1].has_requested_ips = true;
+
+	return 0;
 }
 
 //Sends IP addresses to clients with has_requested_ips set to true.

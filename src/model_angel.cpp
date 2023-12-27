@@ -122,7 +122,7 @@ int model_angel::check_networking_agent(){
 				this->add_message_to_log(ALERT, messages[i].text);
 				break;
 			case REQ_IP:
-				this->add_message_to_log(REQ_IP, NULL);
+				this->add_message_to_log(REQ_IP, messages[i].text);
 				break;
 			default:
 				dbgprint("[MODEL_ANGEL] Message with unrecognised type somehow got through the filters!\n");

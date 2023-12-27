@@ -31,6 +31,8 @@ class networking_agent{
 		int init_socket();
 		int add_client(int fd);
 		void rem_client_by_index(int idx);
+		//Fantastic name, I know.
+		int connect_to_requested_ips_listening_place(const char* ips_str, const char* port_str);
 };
 
 #endif
