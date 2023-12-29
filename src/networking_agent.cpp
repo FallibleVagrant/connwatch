@@ -330,9 +330,9 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 			message msg;
 			msg.type = REQ_IP;
 
-			char ip_str[BUFLEN];
-			char port_str[BUFLEN];
-			sscanf(buf, "REQ IP %s %s", ip_str, port_str);
+			char ip_str[129];
+			char port_str[17];
+			sscanf(buf, "REQ IP %128s %16s", ip_str, port_str);
 
 			//Fantastic name, I know.
 			int r = connect_to_requested_ips_listening_place(ip_str, port_str);
