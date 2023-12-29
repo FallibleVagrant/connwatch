@@ -460,7 +460,7 @@ int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
 
 		if(client.has_requested_ips){
 			dbgprint("[NET_AGENT] Sending IPs to client %u.\n", i);
-			strcpy(buf, "START\n");
+			strcpy(buf, "CLEAR ACTIVE CONNS\n");
 
 			for(conn_entry* entry : connections){
 				if(strlen(buf) > (multiplier * BUFLEN) - (3 * INET6_ADDRSTRLEN)){
@@ -469,12 +469,6 @@ int networking_agent::send_requested_ips(std::vector<conn_entry*>& connections){
 					strcpy(newbuf, buf);
 					free(buf);
 					buf = newbuf;
-				}
-				if(entry->ip_ver == AF_INET){
-					strcat(buf, "4 ");
-				}
-				else{
-					strcat(buf, "6 ");
 				}
 
 				strcat(buf, entry->local_addr);
