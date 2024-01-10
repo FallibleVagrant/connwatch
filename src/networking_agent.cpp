@@ -331,7 +331,7 @@ int networking_agent::check_for_messages(std::vector<message>& messages){
 			msg.type = REQ_IP;
 
 			char ip_str[129];
-			char port_str[17];
+			char port_str[32];
 			sscanf(buf, "REQ IP %128s %16s", ip_str, port_str);
 
 			//Fantastic name, I know.

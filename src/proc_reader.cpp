@@ -1,3 +1,19 @@
+/*This program contains modified source code from the ss utility,
+ *primarily here, in the proc_reader.cpp file.
+ *I haven't yet taken the liberty of annotating which functions are mine,
+ *and which are not; you are on your own until I get around to it.
+ *
+ *In any case, all of the source code is under the GPL, so here's a copyright notice:
+ *
+ *		This program is free software; you can redistribute it and/or
+ *		modify it under the terms of the GNU General Public License
+ *		as published by the Free Software Foundation; either version
+ *		2 of the License, or (at your option) any later version.
+ *
+ * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
+ * Also me, fallible_vagrant, I guess.
+ */
+
 #include "proc_reader.h"
 
 #include <cstdio>
